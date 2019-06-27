@@ -1,7 +1,5 @@
 name = "Two-factor Authentication (TFA)"
 description = Pluggable provider of second factor authentication for Drupal
-core = 7.x
+backdrop = 1.x
+type = module
 configure = admin/config/people/tfa
-
-files[] = tfa.inc
-files[] = tests/tfa.test

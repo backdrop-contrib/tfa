@@ -5,6 +5,21 @@
  */
 
 /**
+ * Implements hook_autoload_info().
+ */
+function tfa_autoload_info() {
+  return array(
+    'Tfa' => 'tfa.inc',
+    'TfaSetup' => 'tfa.inc',
+    'TfaBasePlugin' => 'tfa.inc',
+    'TfaValidationPluginInterface' => 'tfa.inc',
+    'TfaLoginPluginInterface' => 'tfa.inc',
+    'TfaSendPluginInterface' => 'tfa.inc',
+    'TfaSetupPluginInterface' => 'tfa.inc',
+  );
+}
+
+/**
  * Implements hook_menu().
  */
 function tfa_menu() {

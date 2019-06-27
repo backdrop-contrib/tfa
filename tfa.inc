@@ -376,6 +376,8 @@ class TfaSetup {
  */
 abstract class TfaBasePlugin {
 
+  const CRYPT_VERSION = '1';
+
   /**
    * @var string
    */
@@ -502,12 +504,41 @@ abstract class TfaBasePlugin {
    *
    * Should be used when writing codes to storage.
    *
-   * @param string.
+   * @param string $text
+   *   The plaintext to be encrypted.
+   *
    * @return string
+   *   The encrypted text.
    */
   protected function encrypt($text) {
+    // Backwards compatibility with MCrypt.
+    if (!extension_loaded('openssl') && extension_loaded('mcrypt')) {
+      return $this->encryptWithMCrypt($text);
+    }
+    $iv = drupal_random_bytes(16);
+    // Using 1 instead of the constant OPENSSL_RAW_DATA, for PHP 5.3.
+    $ciphertext = openssl_encrypt($text, 'AES-256-CBC', $this->encryptionKey, 1, $iv);
+    $crypto_data = array(
+      'version' => self::CRYPT_VERSION,
+      'iv_base64' => base64_encode($iv),
+      'ciphertext_base64' => base64_encode($ciphertext),
+    );
+    $json_encoded_crypto_data = drupal_json_encode($crypto_data);
+    return $json_encoded_crypto_data;
+  }
+
+  /**
+   * Encrypt using the deprecated mcrypt extension.
+   *
+   * @param string $text
+   *
+   * @return string
+   */
+  protected function encryptWithMCrypt($text, $iv = null) {
     $td = mcrypt_module_open('rijndael-128', '', 'cbc', '');
-    $iv = drupal_random_bytes(mcrypt_enc_get_iv_size($td));
+    if (empty($iv)) {
+      $iv = drupal_random_bytes(mcrypt_enc_get_iv_size($td));
+    }
 
     $key = substr($this->encryptionKey, 0, mcrypt_enc_get_key_size($td));
 
@@ -528,10 +559,42 @@ abstract class TfaBasePlugin {
    *
    * Should be used when reading codes from storage.
    *
-   * @param string
-   * @return string
+   * @param string $data
+   *   The encrypted text.
+   *
+   * @return string|boolean
+   *   The plaintext, or FALSE on failure.
    */
   protected function decrypt($data) {
+    $is_legacy = TRUE;
+    $crypto_data = drupal_json_decode($data);
+    if (!empty($crypto_data['version']) && !empty($crypto_data['iv_base64']) && !empty($crypto_data['ciphertext_base64'])) {
+      $is_legacy = FALSE;
+    }
+    // Backwards compatibility with the old MCrypt scheme.
+    if ($is_legacy === TRUE) {
+      if (extension_loaded('openssl')) {
+        return $this->decryptLegacyDataWithOpenSSL($data);
+      }
+      if (extension_loaded('mcrypt')) {
+        return $this->decryptLegacyDataWithMCrypt($data);
+      }
+      return FALSE;
+    }
+    $iv = base64_decode($crypto_data['iv_base64']);
+    $ciphertext = base64_decode($crypto_data['ciphertext_base64']);
+    return openssl_decrypt($ciphertext, 'AES-256-CBC', $this->encryptionKey, TRUE, $iv);
+  }
+
+  /**
+   * Decrypt using the deprecated MCrypt extension.
+   *
+   * @param string $data
+   *
+   * @return string|boolean
+   *   The plaintext, or FALSE on failure.
+   */
+  protected function decryptLegacyDataWithMCrypt($data) {
     $td = mcrypt_module_open('rijndael-128', '', 'cbc', '');
     $iv = substr($data, 0, mcrypt_enc_get_iv_size($td));
 
@@ -551,6 +614,36 @@ abstract class TfaBasePlugin {
     return $text;
   }
 
+  /**
+   * Use OpenSSL to decrypt data that was originally encrypted with MCrypt
+   * (by an earlier version of this module).
+   *
+   * @param string $data
+   *
+   * @return string|boolean
+   *   The plaintext, or FALSE on failure.
+   */
+  protected function decryptLegacyDataWithOpenSSL($data) {
+    $key_size = 32; // Based on return value of mcrypt_enc_get_key_size($td).
+    $iv_size = 16; // Based on return value of mcrypt_enc_get_iv_size($td).
+    $key = substr($this->encryptionKey, 0, $key_size);
+    $iv = substr($data, 0, $iv_size);
+    $data = substr($data, $iv_size);
+    // Using 3 instead of the constant OPENSSL_NO_PADDING, for PHP 5.3.
+    $options = 3;
+    $decrypted_text = openssl_decrypt($data, 'AES-256-CBC', $key, $options, $iv);
+    if ($decrypted_text === FALSE) {
+      return FALSE;
+    }
+
+    // Return only the message and none of its padding.
+    if (strpos($decrypted_text, '|') !== FALSE) {
+      list($length, $padded_data) = explode('|', $decrypted_text, 2);
+      $decrypted_text = substr($padded_data, 0, $length);
+    }
+
+    return $decrypted_text;
+  }
 }
 
 /**
