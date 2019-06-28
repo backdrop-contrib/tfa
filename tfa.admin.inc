@@ -38,7 +38,7 @@ function tfa_admin_settings($form, $form_state) {
     return array();
   }
 
-  $enabled = variable_get('tfa_enabled', 0);
+  $enabled = config_get('tfa.settings', 'tfa_enabled');
 
   $form['plugins'] = array(
     '#type' => 'fieldset',
@@ -48,13 +48,13 @@ function tfa_admin_settings($form, $form_state) {
   foreach ($plugins as $key => $plugin) {
     $message = '<strong>@name</strong> (%type)';
     // Include message whether plugin is set.
-    if ($enabled && variable_get('tfa_validate_plugin', '') === $key) {
+    if ($enabled && config_get('tfa.settings', 'tfa_validate_plugin') === $key) {
       $message .= ' - active validator';
     }
-    elseif ($enabled && in_array($key, variable_get('tfa_login_plugins', array()))) {
+    elseif ($enabled && in_array($key, config_get('tfa.settings', 'tfa_login_plugins'))) {
       $message .= ' - active login';
     }
-    elseif ($enabled && in_array($key, variable_get('tfa_fallback_plugins', array()))) {
+    elseif ($enabled && in_array($key, config_get('tfa.settings', 'tfa_fallback_plugins'))) {
       $message .= ' - active fallback';
     }
     elseif ($enabled) {
@@ -85,7 +85,7 @@ function tfa_admin_settings($form, $form_state) {
       '#type' => 'select',
       '#title' => t('Default validation plugin'),
       '#options' => $validate_plugins,
-      '#default_value' => variable_get('tfa_validate_plugin', ''),
+      '#default_value' => config_get('tfa.settings', 'tfa_validate_plugin'),
       '#description' => t('Plugin that will be used as the default TFA process.'),
       '#states' => $enabled_state,
     );
@@ -99,7 +99,7 @@ function tfa_admin_settings($form, $form_state) {
 
   // Order of fallback plugins
   if (count($validate_plugins) > 1) {
-    $enabled_fallback = variable_get('tfa_fallback_plugins', array());
+    $enabled_fallback = config_get('tfa.settings', 'tfa_fallback_plugins');
     $form['tfa_fallback'] = array(
       '#type' => 'fieldset',
       '#title' => t('Validation fallback plugins'),
@@ -164,7 +164,7 @@ function tfa_admin_settings($form, $form_state) {
       '#type' => 'checkboxes',
       '#title' => t('Login plugins'),
       '#options' => $login_plugins,
-      '#default_value' => variable_get('tfa_login_plugins', array()),
+      '#default_value' => config_get('tfa.settings', 'tfa_login_plugins'),
       '#description' => t('Plugins that can allow a user to skip the TFA process. If any plugin returns true the user will not be required to follow TFA. <strong>Use with caution.</strong>'),
       '#states' => $enabled_state,
     );
@@ -184,18 +184,19 @@ function tfa_admin_settings($form, $form_state) {
  */
 function tfa_admin_settings_submit($form, &$form_state) {
   backdrop_set_message(t('Configuration saved'));
+  $config = config('tfa.settings');
   $values = $form_state['values'];
   // Set enabled.
   if (!empty($values['tfa_enabled'])) {
-    variable_set('tfa_enabled', $values['tfa_enabled']);
+    $config->set('tfa_enabled', $values['tfa_enabled']);
   }
   else {
-    variable_del('tfa_enabled');
+    $config->set('tfa_enabled', 0);
     return;
   }
 
   // Set main validation plugins.
-  variable_set('tfa_validate_plugin', $values['tfa_validate']);
+  $config->set('tfa_validate_plugin', $values['tfa_validate']);
 
   // Set fallback plugins.
   $fallback = array();
@@ -210,7 +211,7 @@ function tfa_admin_settings_submit($form, &$form_state) {
   // are altered. TFA will skip it if it's the same as validation at runtime.
   $fallback[-999] = $values['tfa_validate'];
   ksort($fallback);
-  variable_set('tfa_fallback_plugins', $fallback);
+  $config->set('tfa_fallback_plugins', $fallback);
 
   // Set login plugins.
   $login = array();
@@ -221,7 +222,8 @@ function tfa_admin_settings_submit($form, &$form_state) {
       }
     }
   }
-  variable_set('tfa_login_plugins', $login);
+  $config->set('tfa_login_plugins', $login);
+  $config->save();
 }
 
 /**

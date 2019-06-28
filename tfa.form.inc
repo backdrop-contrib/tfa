@@ -62,8 +62,8 @@ function tfa_form_validate($form, &$form_state) {
     foreach ($tfa->getErrorMessages() as $element => $message) {
       form_set_error($element, $message);
     }
-    $identifier = variable_get('user_failed_login_identifier_uid_only', FALSE) ? $account->uid : $account->uid . '-' . ip_address();
-    flood_register_event('tfa_user', variable_get('tfa_user_window', 900), $identifier);
+    $identifier = config_get('user.flood', 'flood_uid_only') ? $account->uid : $account->uid . '-' . ip_address();
+    flood_register_event('tfa_user', config_get('tfa.settings', 'tfa_user_window'), $identifier);
 
     if (_tfa_hit_flood($tfa)) {
       module_invoke_all('tfa_flood_hit', $tfa->getContext());
@@ -163,21 +163,21 @@ function _tfa_form_get_destination($context, $form_state, $account) {
  * @return bool
  */
 function _tfa_hit_flood($tfa) {
-  if (variable_get('tfa_test_mode', 0)) {
+  if (config_get('tfa.settings', 'tfa_test_mode')) {
     return FALSE;
   }
-  $window = variable_get('tfa_flood_window', 3600);
-  $user_window = variable_get('tfa_user_window', 900);
+  $window = config_get('tfa.settings', 'tfa_flood_window');
+  $user_window = config_get('tfa.settings', 'tfa_user_window');
   $context = $tfa->getContext();
-  $identifier = variable_get('user_failed_login_identifier_uid_only', FALSE) ? $context['uid'] : $context['uid'] . '-' . ip_address();
+  $identifier = config_get('user.flood', 'flood_uid_only') ? $context['uid'] : $context['uid'] . '-' . ip_address();
 
   // Check user specific flood
-  if (!flood_is_allowed('tfa_user', variable_get('tfa_user_threshold', 6), $user_window, $identifier)) {
+  if (!flood_is_allowed('tfa_user', config_get('tfa.settings', 'tfa_user_threshold'), $user_window, $identifier)) {
     backdrop_set_message(t('You have reached the threshold for incorrect code entry attempts. Please try again in !time minutes.', array('!time' => round($user_window / 60))), 'error');
     return TRUE;
   }
   // Check entire process flood.
-  elseif (!flood_is_allowed('tfa_begin', variable_get('tfa_begin_threshold', 6), $window)) {
+  elseif (!flood_is_allowed('tfa_begin', config_get('tfa.settings', 'tfa_begin_threshold'), $window)) {
     backdrop_set_message(t('You have reached the threshold for TFA attempts. Please try again in !time minutes.', array('!time' => round($window / 60))), 'error');
     return TRUE;
   }

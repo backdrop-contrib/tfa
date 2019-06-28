@@ -1,0 +1,12 @@
+{
+    "_config_name": "tfa.settings",
+    "tfa_enabled": 0,
+    "tfa_test_mode": 0,
+    "tfa_validate_plugin": "",
+    "tfa_fallback_plugins": [],
+    "tfa_login_plugins": [],
+    "tfa_begin_threshold": 6,
+    "tfa_flood_window": 3600,
+    "tfa_user_window": 900,
+    "tfa_user_threshold": 6
+}

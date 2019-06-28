@@ -1,4 +1,4 @@
-## Two-factor Authentication (TFA) module for Backdrop
+# Two-factor Authentication (TFA) module for Backdrop
 
 TFA is a base module for providing two-factor authentication for your Backdrop
 site. As a base module, TFA handles all of the Backdrop integration work,
@@ -10,7 +10,7 @@ integrations with third-party suppliers like Authy, Duo and others.
 Read more about the features and use of TFA at its Backdrop.org project page at
 https://backdropcms.org/project/tfa
 
-### Installation and use
+## Installation and use
 
 TFA module can be installed like other Backdrop modules by placing this directory
 in the Backdrop file system (for example, under sites/all/modules) and enabling on
@@ -19,7 +19,7 @@ the Backdrop modules page.
 TFA module does not come with any plugins of its own so refer to the project
 page for contributed plugins or read the section on Plugin development.
 
-### Configuration
+## Configuration
 
 TFA can be configured on your Backdrop site at Administration - Configuration -
 People - Two-factor Authentication. Available plugins will be listed along with
@@ -28,14 +28,14 @@ their type and configured use, if set.
 Additionally, a permission is exposed to Backdrop roles allowing them to skip the
 TFA process -- regardless of plugins and the "require TFA" setting.
 
-#### Default validation plugin
+### Default validation plugin
 
 The plugin that will be used by default during user authentication. The plugin
 must be ready for use by the authenticating account. If "Require TFA" is marked
 then an account that has not setup TFA with the validation plugin will be unable
 to log in.
 
-#### Fallback plugins
+### Fallback plugins
 
 With multiple validation plugins installed, TFA can be setup to handle fallback
 options for a user going through the TFA process. For example, let's say a user
@@ -43,7 +43,7 @@ has setup SMS code delivery and TOTP via Google Authenticator app on their
 phone. In the situation that the user has deleted the Authenticator app they
 could fallback to SMS code delivery and still authenticate to the site.
 
-### Plugin development
+## Plugin development
 
 TFA plugins provide the form and validation handling for 2nd factor
 authentication of a user. The TFA module will interrupt a successful username
@@ -51,7 +51,7 @@ and password authentication and begin the TFA process (see Configuration for
 exceptions to this statement), passing off the form control and validation to
 the active plugin.
 
-#### Getting started
+### Getting started
 
  * Implement hook_tfa_api() in a .module file
 
@@ -63,7 +63,7 @@ TfaSetupPluginInterface
 
 For starter or example code see the test classes at ./tests/includes/
 
-#### Plugin interfaces, or types of plugins
+### Plugin interfaces, or types of plugins
 
 TFA plugins should implement one of the following interfaces.
 
@@ -82,7 +82,7 @@ code.
  * Setup (TfaSetupPluginInterface) - A setup plugin is used by the TfaSetup
  class for configuring a TFA plugin for an account.
 
-#### Plugin context
+### Plugin context
 
 A plugin is instantiated with an array of data about the occurring TFA process.
 This context array must contain the following elements that should not be
@@ -97,7 +97,7 @@ is no conflict with the above keys. Context can be used for temporal storage of
 plugin data like codes or state but do be aware that this context may be written
 to the Backdrop session or form cache database tables.
 
-#### Base methods
+### Base methods
 
 Plugins can implement the ready() method to determine if its ready for use with
 the authenticating account. For example, if authenticating user has not setup of
@@ -108,7 +108,7 @@ The finalize() method can be used to carry-out actions after confirming the TFA
 process. For example, a SMS plugin might mark a code as having been used to
 prevent a repeated attempt.
 
-#### Cryptography
+### Cryptography
 
 The base TFA plugin class provides encryption and decryption methods using PHP
 Mcrypt. While you can use these methods for simple encryption it is recommended
@@ -120,7 +120,7 @@ decrypt methods.
 * Zend Framework's Zend\Crypt
 * phpseclib http://phpseclib.sourceforge.net/
 
-#### Example implementation descriptions
+### Example implementation descriptions
 
 **How to generate and send a code to a user via SMS**
 
@@ -140,3 +140,17 @@ A services authentication scheme will be affected by TFA's implementation during
 hook_user_login() so create a login plugin that checks the services user and
 returns TRUE for loginAllowed(). See TfaTestLogin in ./tests/includes for an
 example.
+
+## License
+
+This project is GPL v2 software. See the LICENSE.txt file in this directory for complete text.
+
+## Current Maintainers
+
+This module is currently seeking maintainers.
+
+## Credits
+
+Ported to Backdrop by Herb v/d Dool (https://github.com/herbdool/)
+
+This module was originally written for Drupal (https://drupal.org/project/tfa). Drupal maintainers are: [coltrane](https://www.drupal.org/u/coltrane), [nerdstein](https://www.drupal.org/u/nerdstein), [daggerhart](https://www.drupal.org/u/daggerhart).

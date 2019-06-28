@@ -5,23 +5,6 @@
  */
 
 /**
- * Implements hook_uninstall().
- */
-function tfa_uninstall() {
-  variable_del('tfa_login_plugins');
-  variable_del('tfa_validate_plugin');
-  variable_del('tfa_fallback_plugins');
-
-  variable_del('tfa_validate_threshold');
-  variable_del('tfa_begin_threshold');
-  variable_del('tfa_flood_window');
-  // This variable used to exist.
-  variable_del('tfa_required');
-  variable_del('tfa_enabled');
-  variable_del('tfa_test_mode');
-}
-
-/**
  * Implements hook_requirements().
  */
 function tfa_requirements($phase) {
@@ -41,7 +24,7 @@ function tfa_requirements($phase) {
       $description = '';
     }
 
-    $enabled = variable_get('tfa_enabled', 0);
+    $enabled = config_get('tfa.settings', 'tfa_enabled');
     $msg = $enabled ? 'Enabled' : 'Not enabled';
 
     $requirements = array(
@@ -56,4 +39,36 @@ function tfa_requirements($phase) {
     return $requirements;
   }
   return array();
+}
+
+/**
+ * Move TFA settings from variables to config.
+ */
+function tfa_update_1000() {
+  // Migrate variables to config.
+  $config = config('tfa.settings');
+  $config->set('tfa_login_plugins', update_variable_get('tfa_login_plugins', array()));
+  $config->set('tfa_validate_plugin', update_variable_get('tfa_validate_plugin', ''));
+  $config->set('tfa_fallback_plugin', update_variable_get('tfa_fallback_plugin', array()));
+  $config->set('tfa_begin_threshold', update_variable_get('tfa_begin_threshold', 6));
+  $config->set('tfa_flood_window', update_variable_get('tfa_flood_window', 3600));
+  $config->set('tfa_user_window', update_variable_get('tfa_user_window', 900));
+  $config->set('tfa_user_threshold', update_variable_get('tfa_user_threshold', 6));
+  $config->set('tfa_enabled', update_variable_get('tfa_enabled', 0));
+  $config->set('tfa_test_mode', update_variable_get('tfa_test_mode', 0));
+  $config->save();
+
+  // Delete variables.
+  update_variable_del('tfa_login_plugins');
+  update_variable_del('tfa_validate_plugin');
+  update_variable_del('tfa_fallback_plugins');
+  update_variable_del('tfa_begin_threshold');
+  update_variable_del('tfa_flood_window');
+  update_variable_del('tfa_user_window');
+  update_variable_del('tfa_user_threshold');
+  update_variable_del('tfa_enabled');
+  update_variable_del('tfa_test_mode');
+  // This variable used to exist.
+  update_variable_del('tfa_validate_threshold');
+  update_variable_del('tfa_required');
 }

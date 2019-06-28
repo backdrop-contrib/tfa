@@ -20,6 +20,17 @@ function tfa_autoload_info() {
 }
 
 /**
+ * Implements hook_config_info().
+ */
+function tfa_config_info() {
+  $prefixes['tfa.settings'] = array(
+    'label' => t('TFA settings'),
+    'group' => t('Configuration'),
+  );
+  return $prefixes;
+}
+
+/**
  * Implements hook_menu().
  */
 function tfa_menu() {
@@ -125,18 +136,18 @@ function tfa_start_context($account) {
 
   $api = module_invoke_all('tfa_api');
   // Add login plugins.
-  foreach (variable_get('tfa_login_plugins', array()) as $key) {
+  foreach (config_get('tfa.settings', 'tfa_login_plugins') as $key) {
     if (array_key_exists($key, $api)) {
       $plugins['login'][] = $key;
     }
   }
   // Add validate.
-  $validate = variable_get('tfa_validate_plugin', '');
+  $validate = config_get('tfa.settings', 'tfa_validate_plugin');
   if (!empty($validate) && array_key_exists($validate, $api)) {
     $plugins['validate'] = $validate;
   }
   // Add fallback plugins.
-  foreach (variable_get('tfa_fallback_plugins', array()) as $key) {
+  foreach (config_get('tfa.settings', 'tfa_fallback_plugins') as $key) {
     if (array_key_exists($key, $api)) {
       $plugins['fallback'][] = $key;
     }
@@ -237,7 +248,7 @@ function tfa_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     case 'user_login':
     case 'user_login_block':
-      if (variable_get('tfa_enabled', 0)) {
+      if (config_get('tfa.settings', 'tfa_enabled')) {
         // Replace Backdrop's login submit handler with TFA to check if
         // authentication should be interrupted and user redirected to TFA form.
         // Replacing user_login_submit() in its position allows other form_alter
@@ -298,7 +309,7 @@ function tfa_login_submit($form, &$form_state) {
   }
   else {
     // Restart flood levels, session context, and TFA process.
-    $identifier = variable_get('user_failed_login_identifier_uid_only', FALSE) ? $account->uid : $account->uid . '-' . ip_address();
+    $identifier = config_get('user.flood', 'flood_uid_only') ? $account->uid : $account->uid . '-' . ip_address();
     flood_clear_event('tfa_user', $identifier);
     flood_register_event('tfa_begin');
     tfa_start_context($account);
@@ -347,7 +358,7 @@ function tfa_login_allowed($account) {
  * Implements hook_user_login().
  */
 function tfa_user_login(&$edit, $account) {
-  if (!variable_get('tfa_enabled', 0)) {
+  if (!config_get('tfa.settings', 'tfa_enabled')) {
     return;
   }
 
@@ -371,7 +382,7 @@ function tfa_user_login(&$edit, $account) {
     // User has been authenticated so force logout and redirect to TFA form.
     tfa_logout();
     // Restart flood levels, session context, and TFA process.
-    $identifier = variable_get('user_failed_login_identifier_uid_only', FALSE) ? $account->uid : $account->uid . '-' . ip_address();
+    $identifier = config_get('user.flood', 'flood_uid_only') ? $account->uid : $account->uid . '-' . ip_address();
     flood_clear_event('tfa_user', $identifier);
     flood_register_event('tfa_begin');
     tfa_start_context($account);
@@ -437,7 +448,7 @@ function tfa_login($account) {
 
   // Truncate flood for user.
   flood_clear_event('tfa_begin');
-  $identifier = variable_get('user_failed_login_identifier_uid_only', FALSE) ? $account->uid : $account->uid . '-' . ip_address();
+  $identifier = config_get('user.flood', 'flood_uid_only') ? $account->uid : $account->uid . '-' . ip_address();
   flood_clear_event('tfa_user', $identifier);
   $edit = array();
   user_module_invoke('login', $edit, $user);
