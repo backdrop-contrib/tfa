@@ -10,7 +10,7 @@
  * @param $account User account
  */
 function tfa_begin_form($account) {
-  return drupal_get_form('tfa_form', $account);
+  return backdrop_get_form('tfa_form', $account);
 }
 /**
  * Main TFA process form builder.
@@ -23,7 +23,7 @@ function tfa_form($form, $form_state, $account) {
   // Check flood tables.
   if (_tfa_hit_flood($tfa)) {
     module_invoke_all('tfa_flood_hit', $tfa->getContext());
-    return drupal_access_denied();
+    return backdrop_access_denied();
   }
   // Get TFA plugins form.
   $form = $tfa->getForm($form, $form_state);
@@ -67,7 +67,7 @@ function tfa_form_validate($form, &$form_state) {
 
     if (_tfa_hit_flood($tfa)) {
       module_invoke_all('tfa_flood_hit', $tfa->getContext());
-      return drupal_access_denied();
+      return backdrop_access_denied();
     }
   }
 }
@@ -111,16 +111,16 @@ function tfa_form_submit($form, &$form_state) {
  * @return array
  */
 function _tfa_form_get_destination($context, $form_state, $account) {
-  $query = drupal_get_query_parameters();
+  $query = backdrop_get_query_parameters();
   $options = array();
   $destination = 'user';
   if (!empty($query['pass-reset-token'])) {
     // If pass-reset-token was set then complete final process interrupted
     // from user_pass_reset().
     watchdog('tfa', 'User %name used one-time login link', array('%name' => $account->name));
-    drupal_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to log in. Please change your password.'));
+    backdrop_set_message(t('You have just used your one-time login link. It is no longer necessary to use this link to log in. Please change your password.'));
     // Let the user's password be changed without the current password check.
-    $token = drupal_hash_base64(drupal_random_bytes(32));
+    $token = backdrop_hash_base64(backdrop_random_bytes(32));
     $_SESSION['pass_reset_' . $account->uid] = $token;
     $query['pass-reset-token'] = $token;
   }
@@ -152,7 +152,7 @@ function _tfa_form_get_destination($context, $form_state, $account) {
   // Allow other modules to alter final destination. This is better than form
   // altering TFA forms because callers would need to check the TFA process
   // status to figure out when to act.
-  drupal_alter('tfa_complete_redirect', $destination, $options);
+  backdrop_alter('tfa_complete_redirect', $destination, $options);
   return array($destination, $options);
 }
 
@@ -173,18 +173,18 @@ function _tfa_hit_flood($tfa) {
 
   // Check user specific flood
   if (!flood_is_allowed('tfa_user', variable_get('tfa_user_threshold', 6), $user_window, $identifier)) {
-    drupal_set_message(t('You have reached the threshold for incorrect code entry attempts. Please try again in !time minutes.', array('!time' => round($user_window / 60))), 'error');
+    backdrop_set_message(t('You have reached the threshold for incorrect code entry attempts. Please try again in !time minutes.', array('!time' => round($user_window / 60))), 'error');
     return TRUE;
   }
   // Check entire process flood.
   elseif (!flood_is_allowed('tfa_begin', variable_get('tfa_begin_threshold', 6), $window)) {
-    drupal_set_message(t('You have reached the threshold for TFA attempts. Please try again in !time minutes.', array('!time' => round($window / 60))), 'error');
+    backdrop_set_message(t('You have reached the threshold for TFA attempts. Please try again in !time minutes.', array('!time' => round($window / 60))), 'error');
     return TRUE;
   }
   // Check TFA plugin flood.
   elseif (!$tfa->floodIsAllowed($window)) {
     foreach ($tfa->getErrorMessages() as $message) {
-      drupal_set_message($message, 'error');
+      backdrop_set_message($message, 'error');
     }
     return TRUE;
   }

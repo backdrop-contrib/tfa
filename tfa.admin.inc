@@ -28,13 +28,13 @@ function tfa_admin_settings($form, $form_state) {
   // Check if openssl or mcrypt extensions are available.
   if (!extension_loaded('openssl') && !extension_loaded('mcrypt')) {
     // @todo allow alter in case of other encryption libs.
-    drupal_set_message(t('The TFA module requires one of the PHP OpenSSL or MCrypt extensions to be installed on the web server. See <a href="!link">the TFA help documentation</a> for setup.', array('!link' => url('admin/help/tfa'))), 'error');
+    backdrop_set_message(t('The TFA module requires one of the PHP OpenSSL or MCrypt extensions to be installed on the web server. See <a href="!link">the TFA help documentation</a> for setup.', array('!link' => url('admin/help/tfa'))), 'error');
     return array();
   }
 
   // Return if there are no plugins.
   if (empty($plugins) || empty($validate_plugins)) {
-    drupal_set_message(t('No plugins available for validation. See <a href="!link">the TFA help documentation</a> for setup.', array('!link' => url('admin/help/tfa'))), 'error');
+    backdrop_set_message(t('No plugins available for validation. See <a href="!link">the TFA help documentation</a> for setup.', array('!link' => url('admin/help/tfa'))), 'error');
     return array();
   }
 
@@ -183,7 +183,7 @@ function tfa_admin_settings($form, $form_state) {
  * Admin form submission handler.
  */
 function tfa_admin_settings_submit($form, &$form_state) {
-  drupal_set_message(t('Configuration saved'));
+  backdrop_set_message(t('Configuration saved'));
   $values = $form_state['values'];
   // Set enabled.
   if (!empty($values['tfa_enabled'])) {

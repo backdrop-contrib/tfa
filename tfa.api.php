@@ -4,7 +4,7 @@
  * @file
  * This file contains no working PHP code; it exists to provide additional
  * documentation for doxygen as well as to document hooks in the standard
- * Drupal manner.
+ * Backdrop manner.
  */
 
 /**
@@ -21,7 +21,7 @@
  * A plugin must extend the TfaBasePlugin class and may implement one or more
  * TFA plugin interfaces.
  *
- * Note, user-defined plugin classes must be available to the Drupal registry
+ * Note, user-defined plugin classes must be available to the Backdrop registry
  * for loading. Either define them in a .info file or via an autoloader.
  *
  * @return
@@ -132,7 +132,7 @@ function my_tfa_setup_form_submit($form, &$form_state) {
     // Invoke plugin form submission.
     $tfaSetup = $form_state['storage']['tfa_setup'];
     if ($tfaSetup->submitForm($form, $form_state)) {
-      drupal_set_message('Setup complete');
+      backdrop_set_message('Setup complete');
       $form_state['redirect'] = 'user';
     }
     else {

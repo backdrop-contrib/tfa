@@ -14,7 +14,7 @@ function tfa_test_menu() {
   // Add local task for setting up test send plugin.
   $items['user/%user/tfa'] = array(
     'title' => 'TFA Setup',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('tfa_test_setup_form', 1),
     'access callback' => 'user_edit_access',
     'access arguments' => array(1),
@@ -146,7 +146,7 @@ function tfa_test_setup_form_submit($form, &$form_state) {
   elseif (!empty($form_state['storage']['tfa_setup'])) {
     $tfaSetup = $form_state['storage']['tfa_setup'];
     if ($tfaSetup->submitForm($form, $form_state)) {
-      drupal_set_message('Setup complete');
+      backdrop_set_message('Setup complete');
       $form_state['redirect'] = 'user';
     }
     else {

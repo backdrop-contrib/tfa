@@ -1,5 +1,5 @@
 name = "Two-factor Authentication (TFA)"
-description = Pluggable provider of second factor authentication for Drupal
+description = Pluggable provider of second factor authentication for Backdrop
 backdrop = 1.x
 type = module
 configure = admin/config/people/tfa

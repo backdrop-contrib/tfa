@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file Two-factor authentication for Drupal.
+ * @file Two-factor authentication for Backdrop.
  */
 
 /**
@@ -36,7 +36,7 @@ function tfa_menu() {
   $items['admin/config/people/tfa'] = array(
     'title' => 'Two-factor Authentication',
     'description' => 'TFA process and plugin settings',
-    'page callback' => 'drupal_get_form',
+    'page callback' => 'backdrop_get_form',
     'page arguments' => array('tfa_admin_settings'),
     'access arguments' => array('admin tfa settings'),
     'file' => 'tfa.admin.inc',
@@ -80,7 +80,7 @@ function tfa_set_context($account, $context) {
   $_SESSION['tfa'][$account->uid] = $context;
   $_SESSION['tfa'][$account->uid]['uid'] = $account->uid;
   // Clear existing static TFA process.
-  drupal_static_reset('tfa_get_process');
+  backdrop_static_reset('tfa_get_process');
 }
 
 /**
@@ -97,7 +97,7 @@ function tfa_get_context($account) {
     $context = $_SESSION['tfa'][$account->uid];
   }
   // Allow other modules to modify TFA context.
-  drupal_alter('tfa_context', $context);
+  backdrop_alter('tfa_context', $context);
   return $context;
 }
 
@@ -143,7 +143,7 @@ function tfa_start_context($account) {
   }
   // Allow other modules to modify TFA context.
   $context = array('uid' => $account->uid, 'plugins' => $plugins);
-  drupal_alter('tfa_context', $context);
+  backdrop_alter('tfa_context', $context);
   tfa_set_context($account, $context);
   return $context;
 }
@@ -167,7 +167,7 @@ function tfa_clear_context($account) {
  * @return Tfa
  */
 function tfa_get_process($account) {
-  $tfa = &drupal_static(__FUNCTION__);
+  $tfa = &backdrop_static(__FUNCTION__);
   if (!isset($tfa)) {
     $context = tfa_get_context($account);
     if (empty($context)) {
@@ -238,7 +238,7 @@ function tfa_form_alter(&$form, &$form_state, $form_id) {
     case 'user_login':
     case 'user_login_block':
       if (variable_get('tfa_enabled', 0)) {
-        // Replace Drupal's login submit handler with TFA to check if
+        // Replace Backdrop's login submit handler with TFA to check if
         // authentication should be interrupted and user redirected to TFA form.
         // Replacing user_login_submit() in its position allows other form_alter
         // handlers to run after. However, the user must be redirected to the
@@ -304,7 +304,7 @@ function tfa_login_submit($form, &$form_state) {
     tfa_start_context($account);
     $tfa = tfa_get_process($account);
 
-    $query = drupal_get_query_parameters();
+    $query = backdrop_get_query_parameters();
     unset($_GET['destination']);
 
     // Begin TFA and set process context.
@@ -364,7 +364,7 @@ function tfa_user_login(&$edit, $account) {
     $require_tfa = array_filter(module_invoke_all('tfa_ready_require', $account));
     if (!empty($require_tfa)) {
       tfa_logout();
-      drupal_goto('user');
+      backdrop_goto('user');
     }
   }
   else {
@@ -378,7 +378,7 @@ function tfa_user_login(&$edit, $account) {
     $tfa = tfa_get_process($account);
 
     // Hold onto destination. It will be used in tfa_form_submit().
-    $query = drupal_get_query_parameters();
+    $query = backdrop_get_query_parameters();
     if (arg(0) == 'user' && arg(1) == 'reset') {
       // If one-time login reset destination and hold onto token.
       $query['destination'] = 'user/' . $account->uid . '/edit';
@@ -394,7 +394,7 @@ function tfa_user_login(&$edit, $account) {
     $login_hash = tfa_login_hash($account);
     // Use of $_GET['destination'] would allow other hooks to run but since the
     // current user is no longer authenticated their expectation would be wrong.
-    drupal_goto('system/tfa/' . $account->uid . '/' . $login_hash, array('query' => $query));
+    backdrop_goto('system/tfa/' . $account->uid . '/' . $login_hash, array('query' => $query));
   }
 }
 
@@ -408,7 +408,7 @@ function tfa_logout() {
   // Destroy the current session, and reset $user to the anonymous user.
   session_destroy();
   // Force anonymous user.
-  $user = drupal_anonymous_user();
+  $user = backdrop_anonymous_user();
 }
 
 /**
@@ -428,7 +428,7 @@ function tfa_login($account) {
     ->execute();
 
   // Regenerate the session ID to prevent against session fixation attacks.
-  drupal_session_regenerate();
+  backdrop_session_regenerate();
 
   watchdog('tfa', 'Session opened for %name.', array('%name' => $user->name));
   // Clear existing context and set master authenticated context.
@@ -450,8 +450,8 @@ function tfa_help($path, $arg) {
   $link = '<p>' . t('For up-to-date help see the <a href="!url">TFA module documentation</a> on drupal.org.', array('!url' => url('http://drupal.org/node/1663240'))) . '</p>';
   switch ($path) {
     case 'admin/help#tfa':
-      $output = '<h3>' . t('Two-factor Authentication for Drupal') . '</h3>';
-      $output .= '<p>' . t("TFA is a base module for providing two-factor authentication for your Drupal site. As such it provides a framework for specific TFA plugins that act during user authentication to confirm a \"second factor\" for the user.") . '<p>';
+      $output = '<h3>' . t('Two-factor Authentication for Backdrop') . '</h3>';
+      $output .= '<p>' . t("TFA is a base module for providing two-factor authentication for your Backdrop site. As such it provides a framework for specific TFA plugins that act during user authentication to confirm a \"second factor\" for the user.") . '<p>';
       // @todo include explanations on TFA module variables and fallback ordering
       $output .= $link;
       return $output;
@@ -468,5 +468,5 @@ function tfa_login_hash($account) {
   // Using account login will mean this hash will become invalid once user has
   // authenticated via TFA.
   $data = implode(':', array($account->name, $account->pass, $account->login));
-  return drupal_hash_base64($data);
+  return backdrop_hash_base64($data);
 }

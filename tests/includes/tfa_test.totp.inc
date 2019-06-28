@@ -40,7 +40,7 @@ class TfaTestTotp extends TfaBasePlugin implements TfaValidationPluginInterface 
    * One-off methods that allow for testing base plugin encryption.
    */
   public function setInStore($data) {
-    $this->encryptionKey = drupal_random_bytes(32);
+    $this->encryptionKey = backdrop_random_bytes(32);
     $this->store = $this->encrypt($data);
   }
 

@@ -491,7 +491,7 @@ abstract class TfaBasePlugin {
   protected function generate() {
     $string = '';
     do {
-      $chars = strtolower(base64_encode(drupal_random_bytes($this->codeLength)));
+      $chars = strtolower(base64_encode(backdrop_random_bytes($this->codeLength)));
       // Remove some characters that are more difficult to distinguish or type.
       $string .= strtr($chars, array('+' => '', '/' => '', '=' => '', '-' => '', '_' => '', '0' => '', 'o' => ''));
     } while(strlen($string) <= $this->codeLength);
@@ -515,7 +515,7 @@ abstract class TfaBasePlugin {
     if (!extension_loaded('openssl') && extension_loaded('mcrypt')) {
       return $this->encryptWithMCrypt($text);
     }
-    $iv = drupal_random_bytes(16);
+    $iv = backdrop_random_bytes(16);
     // Using 1 instead of the constant OPENSSL_RAW_DATA, for PHP 5.3.
     $ciphertext = openssl_encrypt($text, 'AES-256-CBC', $this->encryptionKey, 1, $iv);
     $crypto_data = array(
@@ -523,7 +523,7 @@ abstract class TfaBasePlugin {
       'iv_base64' => base64_encode($iv),
       'ciphertext_base64' => base64_encode($ciphertext),
     );
-    $json_encoded_crypto_data = drupal_json_encode($crypto_data);
+    $json_encoded_crypto_data = backdrop_json_encode($crypto_data);
     return $json_encoded_crypto_data;
   }
 
@@ -537,7 +537,7 @@ abstract class TfaBasePlugin {
   protected function encryptWithMCrypt($text, $iv = null) {
     $td = mcrypt_module_open('rijndael-128', '', 'cbc', '');
     if (empty($iv)) {
-      $iv = drupal_random_bytes(mcrypt_enc_get_iv_size($td));
+      $iv = backdrop_random_bytes(mcrypt_enc_get_iv_size($td));
     }
 
     $key = substr($this->encryptionKey, 0, mcrypt_enc_get_key_size($td));
@@ -567,7 +567,7 @@ abstract class TfaBasePlugin {
    */
   protected function decrypt($data) {
     $is_legacy = TRUE;
-    $crypto_data = drupal_json_decode($data);
+    $crypto_data = backdrop_json_decode($data);
     if (!empty($crypto_data['version']) && !empty($crypto_data['iv_base64']) && !empty($crypto_data['ciphertext_base64'])) {
       $is_legacy = FALSE;
     }

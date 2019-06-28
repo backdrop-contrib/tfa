@@ -2,13 +2,13 @@
 
 /**
  * @file tfa.test.
- * Drupal test cases for TFA.
+ * Backdrop test cases for TFA.
  */
 
 /**
 * Tests the functionality of the TFA module.
 */
-class TfaTestCase extends DrupalWebTestCase {
+class TfaTestCase extends BackdropWebTestCase {
 
   public static function getInfo() {
     return array(
@@ -22,7 +22,7 @@ class TfaTestCase extends DrupalWebTestCase {
     // Enable TFA module and the test module.
     parent::setUp('tfa', 'tfa_test');
     variable_set('tfa_enabled', TRUE);
-    $this->web_user = $this->drupalCreateUser(array('access content'));
+    $this->web_user = $this->backdropCreateUser(array('access content'));
   }
 
   public function testAuthentication() {
@@ -37,8 +37,8 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    // Not using drupalLogin() since it tests for actual login.
-    $this->drupalPost('user/login', $edit, 'Log in');
+    // Not using backdropLogin() since it tests for actual login.
+    $this->backdropPost('user/login', $edit, 'Log in');
     // Get login hash. Could user tfa_login_hash() but would require reloading
     // account.
     $url_parts = explode('/', $this->url);
@@ -54,19 +54,19 @@ class TfaTestCase extends DrupalWebTestCase {
     $edit = array(
       'code' => $this->randomName(),
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
     $this->assertText('Invalid sent code', 'Error message appears for random code');
     // Check resend text.
-    $this->drupalPost(NULL, array(), 'Resend');
+    $this->backdropPost(NULL, array(), 'Resend');
     $this->assertText('Code resent', 'Resent message appears');
     // Confirm login.
     $edit = array(
       'code' => $code,
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
     $this->assertLink('Log out', 0, 'Logout link appears');
 
-    $this->drupalGet('user/logout');
+    $this->backdropGet('user/logout');
 
     // Enable TOTP and two fallback.
     variable_set('tfa_validate_plugin', 'tfa_test_totp');
@@ -76,7 +76,7 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $url_parts = explode('/', $this->url);
     $login_hash = array_pop($url_parts);
 
@@ -84,22 +84,22 @@ class TfaTestCase extends DrupalWebTestCase {
     $this->assertText('TOTP code', 'TOTP code appears');
     $this->assertFieldById('edit-fallback', '', 'Fallback button appears');
     // Begin fallback.
-    $this->drupalPost(NULL, array(), $this->uiStrings('fallback-button'));
+    $this->backdropPost(NULL, array(), $this->uiStrings('fallback-button'));
     $this->assertText('Enter sent code', 'The send code input appears');
     // Second fallback.
-    $this->drupalPost(NULL, array(), $this->uiStrings('fallback-button'));
+    $this->backdropPost(NULL, array(), $this->uiStrings('fallback-button'));
     $this->assertText('Enter recovery code', 'The recovery code input appears');
     // Confirm validation error.
     $edit = array(
       'recover' => $this->randomName(),
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
     $this->assertText('Invalid recovery code', 'Error message appears for random code');
     // Confirm login.
     $edit = array(
       'recover' => 'FAILSAFE',
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
     $this->assertLink('Log out', 0, 'Logout link appears');
   }
 
@@ -115,7 +115,7 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
 
     // Check TFA validation flood.
     $url_parts = explode('/', $this->url);
@@ -123,14 +123,14 @@ class TfaTestCase extends DrupalWebTestCase {
     $edit = array(
       'code' => $this->randomName(),
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
     $this->assertText('Invalid sent code', 'Error message appears for random code');
     $this->assertIdentical(variable_get('tfa_test_flood_hit', ''), '', 'TFA flood hit hooks not yet invoked');
     // Hit flood limit.
     for ($i = 1; $i < $hourly_threshold; $i++) {
-      $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
+      $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
     }
-    $this->drupalGet('system/tfa/' . $account->uid . '/' . $login_hash); // Not sure why this is necessary.
+    $this->backdropGet('system/tfa/' . $account->uid . '/' . $login_hash); // Not sure why this is necessary.
     $this->assertText($this->uiStrings('flood-validate'), 'The validation flood text appears');
 
     variable_set('tfa_begin_threshold', 2);
@@ -139,7 +139,7 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $this->assertText($this->uiStrings('flood-begin'), 'The begin flood text appears');
 
     // Assert that hook_tfa_flood_hit() was invoked.
@@ -155,10 +155,10 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $url_parts = explode('/', $this->url);
     $login_hash = array_pop($url_parts);
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, array(), 'Resend');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, array(), 'Resend');
     $this->assertText('Resend flood hit', 'The resend flood text appears');
   }
 
@@ -178,10 +178,10 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $this->assertText('Error during send', 'Error message appears for begin error');
     // Test resend.
-    $this->drupalPost(NULL, array(), 'Resend');
+    $this->backdropPost(NULL, array(), 'Resend');
     $this->assertText('Error during resend', 'Error message appears for resend');
   }
 
@@ -199,7 +199,7 @@ class TfaTestCase extends DrupalWebTestCase {
     );
     // Set destination to filter tips page.
     $options = array('query' => array('destination' => 'filter/tips'));
-    $this->drupalPost('user/login', $login, 'Log in', $options);
+    $this->backdropPost('user/login', $login, 'Log in', $options);
     // Reload account since login timestamp is updated.
     $account = user_load($account->uid);
     $login_hash = tfa_login_hash($account);
@@ -208,20 +208,20 @@ class TfaTestCase extends DrupalWebTestCase {
     $edit = array(
       'code' => $code,
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit', $options);
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit', $options);
     $this->assertLink('Log out', 0, 'Logout link appears');
     // Confirm user is on filter tips page.
     $this->assertText('Compose tips', 'Redirected page text appears');
-    $this->drupalLogout();
+    $this->backdropLogout();
 
     // Test form_state redirect. tfa_test module sets filter/tips redirect.
     variable_set('tfa_test_login_form_redirect', TRUE);
 
-    $this->drupalPost('user/login', $login, 'Log in');
+    $this->backdropPost('user/login', $login, 'Log in');
     $edit = array(
       'code' => $code,
     );
-    $this->drupalPost(NULL, $edit, 'Submit');
+    $this->backdropPost(NULL, $edit, 'Submit');
     $this->assertLink('Log out', 0, 'Logout link appears');
     // Confirm user is on filter tips page.
     $this->assertText('Compose tips', 'Redirected page text appears');
@@ -240,7 +240,7 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $this->assertNoLink('Log out', 'Not authenticated');
 
     // Set TfaTestLogin to allow login.
@@ -249,7 +249,7 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $this->assertLink('Log out', 0, 'Authenticated');
     $this->assertNoFieldById('edit-code', '', 'The send code input does not appear');
   }
@@ -265,10 +265,10 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $this->assertLink('Log out', 0, 'Authenticated');
 
-    $this->drupalLogout();
+    $this->backdropLogout();
   }
 
   /**
@@ -286,7 +286,7 @@ class TfaTestCase extends DrupalWebTestCase {
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    $this->drupalPost('user/login', $edit, 'Log in');
+    $this->backdropPost('user/login', $edit, 'Log in');
     $this->assertNoText('TOTP code', 'TOTP code does not appear');
   }
 
@@ -300,38 +300,38 @@ class TfaTestCase extends DrupalWebTestCase {
     variable_set('tfa_enabled', FALSE);
 
     $account = $this->web_user;
-    $this->drupalLogin($account);
+    $this->backdropLogin($account);
 
     // Enable TFA and begin configuration.
     variable_set('tfa_enabled', TRUE);
     variable_set('tfa_validate_plugin', 'tfa_test_send');
     variable_set('tfa_test_setup_class', 'TfaTestSendSetup');
 
-    $this->drupalGet('user/' . $account->uid . '/tfa');
+    $this->backdropGet('user/' . $account->uid . '/tfa');
 
     $edit = array();
-    $this->drupalPost(NULL, $edit, 'Setup send');
+    $this->backdropPost(NULL, $edit, 'Setup send');
 
     // Set plugin location to account name.
     $edit = array(
       'location' => $account->name,
     );
-    $this->drupalPost(NULL, $edit, 'Submit');
+    $this->backdropPost(NULL, $edit, 'Submit');
     // Enter default test code.
     $edit = array(
       'code' => variable_get('tfa_test_code', 'TEST'),
     );
-    $this->drupalPost(NULL, $edit, 'Submit');
+    $this->backdropPost(NULL, $edit, 'Submit');
 
     // Logout to now test TFA process.
-    $this->drupalGet('user/logout');
+    $this->backdropGet('user/logout');
 
     $edit = array(
       'name' => $account->name,
       'pass' => $account->pass_raw,
     );
-    // Not using drupalLogin() since it tests for actual login.
-    $this->drupalPost('user/login', $edit, 'Log in');
+    // Not using backdropLogin() since it tests for actual login.
+    $this->backdropPost('user/login', $edit, 'Log in');
     // Get login hash. Could user tfa_login_hash() but would require reloading
     // account.
     $url_parts = explode('/', $this->url);
@@ -342,7 +342,7 @@ class TfaTestCase extends DrupalWebTestCase {
     $edit = array(
       'code' => $account->name,
     );
-    $this->drupalPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
+    $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
     $this->assertLink('Log out', 0, 'Logout link appears');
   }
 

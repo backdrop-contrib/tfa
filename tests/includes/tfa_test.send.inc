@@ -61,10 +61,10 @@ class TfaTestSend extends TfaBasePlugin implements TfaValidationPluginInterface,
       flood_register_event('tfa_test_resend', 3600, $this->context['uid']);
       // Support causing send error.
       if (!variable_get('tfa_test_send_begin', TRUE)) {
-        drupal_set_message('Error during resend', 'error');
+        backdrop_set_message('Error during resend', 'error');
       }
       else {
-        drupal_set_message('Code resent');
+        backdrop_set_message('Code resent');
       }
       return FALSE;
     }
@@ -78,7 +78,7 @@ class TfaTestSend extends TfaBasePlugin implements TfaValidationPluginInterface,
     flood_clear_event('tfa_test_resend');
     // Variable used by TfaTestCase::testSendError().
     if (!variable_get('tfa_test_send_begin', TRUE)) {
-      drupal_set_message('Error during send', 'error');
+      backdrop_set_message('Error during send', 'error');
     }
     // A real plugin might send the code to the user.
   }
