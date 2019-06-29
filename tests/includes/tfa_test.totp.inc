@@ -8,7 +8,7 @@ class TfaTestTotp extends TfaBasePlugin implements TfaValidationPluginInterface 
   protected $store;
 
   public function ready() {
-    return variable_get('tfa_test_is_ready', TRUE);
+    return state_get('tfa_test_is_ready', TRUE);
   }
 
   public function getForm(array $form, array &$form_state) {
@@ -26,7 +26,10 @@ class TfaTestTotp extends TfaBasePlugin implements TfaValidationPluginInterface 
   }
 
   public function validateForm(array $form, array &$form_state) {
-    $this->code = variable_get('tfa_totp', 123456);
+    $this->code = 123456;
+    if (!empty(config_get('tfa.settings', 'tfa_totp'))) {
+      $this->code = config_get('tfa.settings', 'tfa_totp');
+    }
     if (!parent::validate($form_state['values']['code'])) {
       $this->errorMessages['code'] = t('Invalid TOTP code');
       return FALSE;

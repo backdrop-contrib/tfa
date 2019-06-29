@@ -1,0 +1,5 @@
+[TfaTestCase]
+name = Two-factor Authentication
+description = Test the Two-factor authentication process.
+group = TFA
+file = tfa.test

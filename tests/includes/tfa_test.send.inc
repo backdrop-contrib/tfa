@@ -4,11 +4,11 @@ class TfaTestSend extends TfaBasePlugin implements TfaValidationPluginInterface,
 
   public function __construct(array $context = array()) {
     parent::__construct($context);
-    $this->code = variable_get('tfa_test_code', 'TEST');
+    $this->code = state_get('tfa_test_code', 'TEST');
   }
 
   public function ready() {
-    return variable_get('tfa_test_is_ready', TRUE);
+    return state_get('tfa_test_is_ready', TRUE);
   }
 
   public function getForm(array $form, array &$form_state) {
@@ -48,7 +48,7 @@ class TfaTestSend extends TfaBasePlugin implements TfaValidationPluginInterface,
    * @return bool
    */
   public function floodIsAllowed($window) {
-    if (!flood_is_allowed('tfa_test_resend', variable_get('tfa_test_resend_threshold', 6), $window, $this->context['uid'])) {
+    if (!flood_is_allowed('tfa_test_resend', state_get('tfa_test_resend_threshold', 6), $window, $this->context['uid'])) {
       $this->errorMessages['code'] = t('Resend flood hit');
       return FALSE;
     }
@@ -60,7 +60,7 @@ class TfaTestSend extends TfaBasePlugin implements TfaValidationPluginInterface,
       // Register resend event for flood protection.
       flood_register_event('tfa_test_resend', 3600, $this->context['uid']);
       // Support causing send error.
-      if (!variable_get('tfa_test_send_begin', TRUE)) {
+      if (!state_get('tfa_test_send_begin', TRUE)) {
         backdrop_set_message('Error during resend', 'error');
       }
       else {
@@ -77,7 +77,7 @@ class TfaTestSend extends TfaBasePlugin implements TfaValidationPluginInterface,
     // Clear resend flood.
     flood_clear_event('tfa_test_resend');
     // Variable used by TfaTestCase::testSendError().
-    if (!variable_get('tfa_test_send_begin', TRUE)) {
+    if (!state_get('tfa_test_send_begin', TRUE)) {
       backdrop_set_message('Error during send', 'error');
     }
     // A real plugin might send the code to the user.
@@ -123,7 +123,7 @@ class TfaTestSendSetup extends TfaTestSend implements TfaSetupPluginInterface {
     }
     else {
       // Replace test code.
-      variable_set('tfa_test_code', $form_state['storage']['location']);
+      state_set('tfa_test_code', $form_state['storage']['location']);
       // Location would be saved.
       return TRUE;
     }

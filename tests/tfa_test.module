@@ -5,6 +5,20 @@
  * A mock module for testing TFA.
  */
 
+
+/**
+ * Implements hook_autoload_info().
+ */
+function tfa_test_autoload_info() {
+  return array(
+    "TfaTestFallback" => "includes/tfa_test.fallback.inc",
+    "TfaTestLogin" => "includes/tfa_test.login.inc",
+    "TfaTestSend" => "includes/tfa_test.send.inc",
+    "TfaTestSendSetup" => "includes/tfa_test.send.inc",
+    "TfaTestTotp" => "includes/tfa_test.totp.inc",
+  );
+}
+
 /**
  * Implements hook_menu().
  */
@@ -52,7 +66,7 @@ function tfa_test_tfa_api() {
  * Implements hook_form_form_id_alter().
  */
 function tfa_test_form_user_login_alter(&$form, &$form_state) {
-  if (variable_get('tfa_test_login_form_redirect', FALSE)) {
+  if (state_get('tfa_test_login_form_redirect', FALSE)) {
     array_unshift($form['#submit'], 'tfa_test_form_login_submit');
   }
 }
@@ -66,7 +80,7 @@ function tfa_test_form_login_submit($form, &$form_state) {
  * @return TfaTestLogin
  */
 function tfa_test_login_create($context) {
-  $uid = variable_get('tfa_test_login_uid', '');
+  $uid = state_get('tfa_test_login_uid', '');
   return new TfaTestLogin($context, $uid);
 }
 
@@ -136,7 +150,7 @@ function tfa_test_setup_form_submit($form, &$form_state) {
     // Unlike the standard Tfa process and tfa_form(). TfaSetup can use
     // $form_state storage to persist user context.
     $context = array('uid' => $account->uid);
-    $class = variable_get('tfa_test_setup_class', '');
+    $class = state_get('tfa_test_setup_class', '');
     $setup_plugin = new $class($context);
     $tfaSetup = new TfaSetup($setup_plugin, array(), $context);
 
@@ -160,9 +174,9 @@ function tfa_test_setup_form_submit($form, &$form_state) {
  * Alters tfa_context array.
  */
 function tfa_test_tfa_context_alter(&$context) {
-  if (variable_get('tfa_test_context_alter', FALSE) !== FALSE) {
+  if (state_get('tfa_test_context_alter', FALSE) !== FALSE) {
     // Set validate plugin.
-    $context['plugins']['validate'] = variable_get('tfa_test_context_alter', '');
+    $context['plugins']['validate'] = state_get('tfa_test_context_alter', '');
   }
 }
 
@@ -172,5 +186,5 @@ function tfa_test_tfa_context_alter(&$context) {
  * @param array $context TFA context.
  */
 function tfa_test_tfa_flood_hit($context) {
-  variable_set('tfa_test_flood_hit', $context['uid']);
+  state_set('tfa_test_flood_hit', $context['uid']);
 }

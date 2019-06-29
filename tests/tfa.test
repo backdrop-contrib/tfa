@@ -10,26 +10,18 @@
 */
 class TfaTestCase extends BackdropWebTestCase {
 
-  public static function getInfo() {
-    return array(
-      'name' => 'Two-factor Authentication',
-      'description' => 'Test the Two-factor authentication process.',
-      'group' => 'TFA',
-    );
-  }
-
   public function setUp() {
     // Enable TFA module and the test module.
     parent::setUp('tfa', 'tfa_test');
-    variable_set('tfa_enabled', TRUE);
+    config_set('tfa.settings', 'tfa_enabled', TRUE);
     $this->web_user = $this->backdropCreateUser(array('access content'));
   }
 
   public function testAuthentication() {
     // Enable test plugin.
-    variable_set('tfa_validate_plugin', 'tfa_test_send');
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     $code = $this->randomName();
-    variable_set('tfa_test_code', $code);
+    state_set('tfa_test_code', $code);
 
     $account = $this->web_user;
 
@@ -69,8 +61,8 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->backdropGet('user/logout');
 
     // Enable TOTP and two fallback.
-    variable_set('tfa_validate_plugin', 'tfa_test_totp');
-    variable_set('tfa_fallback_plugins', array('tfa_test_send', 'tfa_test_fallback'));
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_totp');
+    config_set('tfa.settings', 'tfa_fallback_plugins', array('tfa_test_send', 'tfa_test_fallback'));
 
     $edit = array(
       'name' => $account->name,
@@ -105,10 +97,10 @@ class TfaTestCase extends BackdropWebTestCase {
 
   public function testFloodControl() {
     // Enable test plugin.
-    variable_set('tfa_validate_plugin', 'tfa_test_send');
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     // Set the TFA hourly flood threshold.
     $hourly_threshold = 3;
-    variable_set('tfa_user_threshold', $hourly_threshold);
+    config_set('tfa.settings', 'tfa_user_threshold', $hourly_threshold);
     $account = $this->web_user;
 
     $edit = array(
@@ -125,7 +117,7 @@ class TfaTestCase extends BackdropWebTestCase {
     );
     $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
     $this->assertText('Invalid sent code', 'Error message appears for random code');
-    $this->assertIdentical(variable_get('tfa_test_flood_hit', ''), '', 'TFA flood hit hooks not yet invoked');
+    $this->assertIdentical(state_get('tfa_test_flood_hit', ''), '', 'TFA flood hit hooks not yet invoked');
     // Hit flood limit.
     for ($i = 1; $i < $hourly_threshold; $i++) {
       $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
@@ -133,7 +125,7 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->backdropGet('system/tfa/' . $account->uid . '/' . $login_hash); // Not sure why this is necessary.
     $this->assertText($this->uiStrings('flood-validate'), 'The validation flood text appears');
 
-    variable_set('tfa_begin_threshold', 2);
+    config_set('tfa.settings', 'tfa_begin_threshold', 2);
     // Check process begin flood.
     $edit = array(
       'name' => $account->name,
@@ -143,13 +135,13 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->assertText($this->uiStrings('flood-begin'), 'The begin flood text appears');
 
     // Assert that hook_tfa_flood_hit() was invoked.
-    $this->assertIdentical(variable_get('tfa_test_flood_hit', ''), $account->uid, 'TFA flood hit hooks invoked');
+    $this->assertIdentical(state_get('tfa_test_flood_hit', ''), $account->uid, 'TFA flood hit hooks invoked');
   }
 
   public function testPluginFloodControl() {
-    variable_set('tfa_validate_plugin', 'tfa_test_send');
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     $account = $this->web_user;
-    variable_set('tfa_test_resend_threshold', 1);
+    state_set('tfa_test_resend_threshold', 1);
 
     $edit = array(
       'name' => $account->name,
@@ -168,9 +160,9 @@ class TfaTestCase extends BackdropWebTestCase {
    */
   public function testSendError() {
     // Enable test plugin.
-    variable_set('tfa_validate_plugin', 'tfa_test_send');
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     // Cause the send plugin to have a begin process error.
-    variable_set('tfa_test_send_begin', FALSE);
+    state_set('tfa_test_send_begin', FALSE);
 
     $account = $this->web_user;
 
@@ -187,9 +179,9 @@ class TfaTestCase extends BackdropWebTestCase {
 
   public function testRedirection() {
     // Enable test plugin.
-    variable_set('tfa_validate_plugin', 'tfa_test_send');
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     $code = $this->randomName();
-    variable_set('tfa_test_code', $code);
+    state_set('tfa_test_code', $code);
 
     $account = $this->web_user;
 
@@ -215,7 +207,7 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->backdropLogout();
 
     // Test form_state redirect. tfa_test module sets filter/tips redirect.
-    variable_set('tfa_test_login_form_redirect', TRUE);
+    state_set('tfa_test_login_form_redirect', TRUE);
 
     $this->backdropPost('user/login', $login, 'Log in');
     $edit = array(
@@ -230,9 +222,9 @@ class TfaTestCase extends BackdropWebTestCase {
   }
 
   public function testLoginPlugins() {
-    variable_set('tfa_validate_plugin', 'tfa_test_send');
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     // Enable login plugin.
-    variable_set('tfa_login_plugins', array('tfa_test_login'));
+    config_set('tfa.settings', 'tfa_login_plugins', array('tfa_test_login'));
 
     $account = $this->web_user;
 
@@ -244,7 +236,7 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->assertNoLink('Log out', 'Not authenticated');
 
     // Set TfaTestLogin to allow login.
-    variable_set('tfa_test_login_uid', (string) $account->uid);
+    state_set('tfa_test_login_uid', (string) $account->uid);
     $edit = array(
       'name' => $account->name,
       'pass' => $account->pass_raw,
@@ -255,11 +247,11 @@ class TfaTestCase extends BackdropWebTestCase {
   }
 
   public function testReady() {
-    variable_set('tfa_validate_plugin', 'tfa_test_send');
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     $account = $this->web_user;
 
     // Disable ready.
-    variable_set('tfa_test_is_ready', FALSE);
+    state_set('tfa_test_is_ready', FALSE);
 
     $edit = array(
       'name' => $account->name,
@@ -276,10 +268,10 @@ class TfaTestCase extends BackdropWebTestCase {
    */
   public function testAlter() {
     // Set TOTP as primary.
-    variable_set('tfa_validate_plugin', 'tfa_test_totp');
-    variable_set('tfa_fallback_plugins', array('tfa_test_send', 'tfa_test_fallback'));
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_totp');
+    config_set('tfa.settings', 'tfa_fallback_plugins', array('tfa_test_send', 'tfa_test_fallback'));
     // Allow context alter that will set send as validate plugin.
-    variable_set('tfa_test_context_alter', 'tfa_test_send');
+    state_set('tfa_test_context_alter', 'tfa_test_send');
     $account = $this->web_user;
 
     $edit = array(
@@ -297,15 +289,15 @@ class TfaTestCase extends BackdropWebTestCase {
    * tfa_test.module tfa_test_setup_form() for how to use.
    */
   public function testSetup() {
-    variable_set('tfa_enabled', FALSE);
+    config_set('tfa.settings', 'tfa_enabled', FALSE);
 
     $account = $this->web_user;
     $this->backdropLogin($account);
 
     // Enable TFA and begin configuration.
-    variable_set('tfa_enabled', TRUE);
-    variable_set('tfa_validate_plugin', 'tfa_test_send');
-    variable_set('tfa_test_setup_class', 'TfaTestSendSetup');
+    config_set('tfa.settings', 'tfa_enabled', TRUE);
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
+    state_set('tfa_test_setup_class', 'TfaTestSendSetup');
 
     $this->backdropGet('user/' . $account->uid . '/tfa');
 
@@ -319,7 +311,7 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->backdropPost(NULL, $edit, 'Submit');
     // Enter default test code.
     $edit = array(
-      'code' => variable_get('tfa_test_code', 'TEST'),
+      'code' => state_get('tfa_test_code', 'TEST'),
     );
     $this->backdropPost(NULL, $edit, 'Submit');
 
