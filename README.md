@@ -58,12 +58,12 @@ the active plugin.
 
 ### Getting started
 
- * Implement hook_tfa_api() in a .module file
+* Implement hook_tfa_api() in a .module file
 
- * Create a class extending TfaBasePlugin and implementing one of the TFA
+* Create a class extending TfaBasePlugin and implementing one of the TFA
 interfaces
 
- * Optionally create a second class for plugin setup implementing
+* Optionally create a second class for plugin setup implementing
 TfaSetupPluginInterface
 
 For starter or example code see the test classes at ./tests/includes/
@@ -72,19 +72,19 @@ For starter or example code see the test classes at ./tests/includes/
 
 TFA plugins should implement one of the following interfaces.
 
- * Validation (TfaValidationPluginInterface) - Validation plugins are the main
+* Validation (TfaValidationPluginInterface) - Validation plugins are the main
 TFA plugin and are used during the authentication process to accept the 2nd
 authenticating element.
 
- * Login (TfaLoginPluginInterface) - Login plugins are used to limit what
+* Login (TfaLoginPluginInterface) - Login plugins are used to limit what
 accounts must carry out TFA before final authentication.
 
- * Send (TfaSendPluginInterface) - Send plugins are used for carrying out an
+* Send (TfaSendPluginInterface) - Send plugins are used for carrying out an
 action at the beginning of the TFA process. For example, a plugin that sends a
 code to a user over SMS could implement this interface to generate and text the
 code.
 
- * Setup (TfaSetupPluginInterface) - A setup plugin is used by the TfaSetup
+* Setup (TfaSetupPluginInterface) - A setup plugin is used by the TfaSetup
  class for configuring a TFA plugin for an account.
 
 ### Plugin context
@@ -93,8 +93,8 @@ A plugin is instantiated with an array of data about the occurring TFA process.
 This context array must contain the following elements that should not be
 modified.
 
- * uid - Backdrop UID of user carrying out the TFA process.
- * plugins - Array of active plugins in the process, must include element
+* uid - Backdrop UID of user carrying out the TFA process.
+* plugins - Array of active plugins in the process, must include element
 'validate' and may also include 'login' and 'fallback'.
 
 The context array may also include any plugin-specifc elements so long as there
@@ -152,7 +152,9 @@ This project is GPL v2 software. See the LICENSE.txt file in this directory for 
 
 ## Current Maintainers
 
-This module is currently seeking maintainers.
+Herb v/d Dool (https://github.com/herbdool/)
+
+This module is currently seeking co-maintainers.
 
 ## Credits
 
