@@ -39,7 +39,6 @@ function tfa_admin_settings($form, $form_state) {
   }
 
   $enabled = config_get('tfa.settings', 'tfa_enabled');
-  debug($enabled, 'enabled');
 
   $form['plugins'] = array(
     '#type' => 'fieldset',
