@@ -39,6 +39,7 @@ function tfa_admin_settings($form, $form_state) {
   }
 
   $enabled = config_get('tfa.settings', 'tfa_enabled');
+  debug($enabled, 'enabled');
 
   $form['plugins'] = array(
     '#type' => 'fieldset',
@@ -187,11 +188,9 @@ function tfa_admin_settings_submit($form, &$form_state) {
   $config = config('tfa.settings');
   $values = $form_state['values'];
   // Set enabled.
-  if (!empty($values['tfa_enabled'])) {
-    $config->set('tfa_enabled', $values['tfa_enabled']);
-  }
-  else {
-    $config->set('tfa_enabled', 0);
+  $config->set('tfa_enabled', $values['tfa_enabled']);
+  if (empty($values['tfa_enabled'])) {
+    $config->save();
     return;
   }
 
