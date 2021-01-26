@@ -49,7 +49,7 @@ function tfa_update_1000() {
   $config = config('tfa.settings');
   $config->set('tfa_login_plugins', update_variable_get('tfa_login_plugins', array()));
   $config->set('tfa_validate_plugin', update_variable_get('tfa_validate_plugin', ''));
-  $config->set('tfa_fallback_plugin', update_variable_get('tfa_fallback_plugin', array()));
+  $config->set('tfa_fallback_plugins', update_variable_get('tfa_fallback_plugins', array()));
   $config->set('tfa_begin_threshold', update_variable_get('tfa_begin_threshold', 6));
   $config->set('tfa_flood_window', update_variable_get('tfa_flood_window', 3600));
   $config->set('tfa_user_window', update_variable_get('tfa_user_window', 900));
@@ -71,4 +71,22 @@ function tfa_update_1000() {
   // This variable used to exist.
   update_variable_del('tfa_validate_threshold');
   update_variable_del('tfa_required');
+}
+
+/**
+ * Fix tfa_fallback_plugins variable.
+ */
+function tfa_update_1001() {
+  // Spelling mistake in previous update hook.
+  // If the variable is still empty set it to include at least the
+  // validate_plugin.
+  $config = config('tfa.settings');
+  $fallback_plugins = $config->get('tfa_fallback_plugins');
+  $validate_plugin = $config->get('tfa_validate_plugin');
+  if ($fallback_plugins !== NULL && !empty($fallback_plugins)) {
+    return;
+  }
+  $config->set('tfa_fallback_plugins', array('-999' => $validate_plugin));
+  $config->clear('tfa_fallback_plugin');
+  $config->save();
 }
