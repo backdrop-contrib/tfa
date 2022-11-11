@@ -37,7 +37,7 @@ function tfa_entry_access($account, $url_hash) {
   // Generate a hash for this account.
   $hash = tfa_login_hash($account);
   $context = tfa_get_context($account);
-  if (REQUEST_TIME > $context['expires']) {
+  if ((isset($context['expires']) && REQUEST_TIME > $context['expires']) || empty($context['expires'])) {
     drupal_set_message(t('TFA session has expired.'));
     return FALSE;
   }
