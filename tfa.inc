@@ -751,7 +751,7 @@ abstract class TfaBasePlugin {
     // Return only the message and none of its padding.
     if (strpos($decrypted_text, '|') !== FALSE) {
       list($length, $padded_data) = explode('|', $decrypted_text, 2);
-      $decrypted_text = substr($padded_data, 0, $length);
+      $decrypted_text = substr($padded_data, 0, (int) $length);
       return $decrypted_text;
     }
     else {
