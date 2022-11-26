@@ -1,16 +1,32 @@
 <?php
 
+/**
+ * @file
+ * Tests for the TfaValidationPluginInterface.
+ */
+
+/**
+ * Class TfaTestTotp.
+ */
 class TfaTestTotp extends TfaBasePlugin implements TfaValidationPluginInterface {
 
   /**
-   * @var string Data store for testing encryption.
+   * Data store for testing encryption.
+   *
+   * @var string
    */
   protected $store;
 
+  /**
+   * {@inheritdoc}
+   */
   public function ready() {
     return state_get('tfa_test_is_ready', TRUE);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getForm(array $form, array &$form_state) {
     $form['code'] = array(
       '#type' => 'textfield',
@@ -25,6 +41,9 @@ class TfaTestTotp extends TfaBasePlugin implements TfaValidationPluginInterface 
     return $form;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function validateForm(array $form, array &$form_state) {
     $this->code = 123456;
     if (!empty(config_get('tfa.settings', 'tfa_totp'))) {
@@ -53,4 +72,5 @@ class TfaTestTotp extends TfaBasePlugin implements TfaValidationPluginInterface 
   public function readFromStore() {
     return $this->decrypt($this->store);
   }
+
 }
