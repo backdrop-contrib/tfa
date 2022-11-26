@@ -272,7 +272,7 @@ function tfa_form_alter(&$form, &$form_state, $form_id) {
         // TFA form so the last handler in the order must be
         // tfa_login_form_redirect(). Other modules may alter the tfa_redirect
         // options element as needed to set the destination after TFA.
-        $key = array_search('user_login_submit', $form['#submit']);
+        $key = isset($form['#submit']) ? array_search('user_login_submit', $form['#submit']) : 0;
         $form['#submit'][$key] = 'tfa_login_submit';
         $form['#submit'][] = 'tfa_login_form_redirect';
       }
