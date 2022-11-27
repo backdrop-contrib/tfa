@@ -381,10 +381,10 @@ class TfaTestCase extends BackdropWebTestCase {
   public function testTfaExpiry()
   {
     // Enable test plugin.
-    variable_set('tfa_validate_plugin', 'tfa_test_send');
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     $code = $this->randomName();
-    variable_set('tfa_test_code', $code);
-    variable_set('tfa_timeout', -60);
+    config_set('tfa.settings', 'tfa_test_code', $code);
+    config_set('tfa.settings', 'tfa_timeout', -60);
 
     $account = $this->web_user;
 

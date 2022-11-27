@@ -8,5 +8,6 @@
     "tfa_begin_threshold": 6,
     "tfa_flood_window": 3600,
     "tfa_user_window": 900,
-    "tfa_user_threshold": 6
+    "tfa_user_threshold": 6,
+    "tfa_timeout": 300
 }

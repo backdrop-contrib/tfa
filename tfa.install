@@ -92,3 +92,15 @@ function tfa_update_1001() {
   $config->clear('tfa_fallback_plugin');
   $config->save();
 }
+
+/**
+ * Move tfa_timeout from variable to config.
+ */
+function tfa_update_1002() {
+  $config = config('tfa.settings');
+  $config->set('tfa_timeout', update_variable_get('tfa_timeout', 300));
+  $config->save();
+
+  // Delete variables.
+  update_variable_del('tfa_timeout');
+}

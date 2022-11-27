@@ -162,7 +162,7 @@ function tfa_start_context($account) {
       $plugins['fallback'][] = $key;
     }
   }
-  $expires = REQUEST_TIME + variable_get('tfa_timeout', 60 * 5);
+  $expires = REQUEST_TIME + config_get('tfa.settings', 'tfa_timeout');
   // Allow other modules to modify TFA context.
   $context = array('uid' => $account->uid, 'plugins' => $plugins, 'expires' => $expires);
   backdrop_alter('tfa_context', $context);
