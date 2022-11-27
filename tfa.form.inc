@@ -1,17 +1,20 @@
 <?php
 
 /**
- * @file tfa.form.inc
+ * @file
+ * Form-related functions.
  */
 
 /**
  * Start of TFA process form.
  *
- * @param $account User account
+ * @param object $account
+ *   User account object.
  */
 function tfa_begin_form($account) {
   return backdrop_get_form('tfa_form', $account);
 }
+
 /**
  * Main TFA process form builder.
  *
@@ -105,16 +108,20 @@ function tfa_form_submit($form, &$form_state) {
 /**
  * Get destination and options for $form_state['redirect'].
  *
- * @param array $context TFA account context
- * @param array $form_state Form API state array from tfa_form_submit()
- * @param $account User account
+ * @param array $context
+ *   TFA account context.
+ * @param array $form_state
+ *   Form API state array from tfa_form_submit().
+ * @param object $account
+ *   User account.
+ *
  * @return array
+ *   Array with the redirect destination, and options.
  */
-function _tfa_form_get_destination($context, $form_state, $account) {
-  $query = backdrop_get_query_parameters();
+function _tfa_form_get_destination(array $context, array $form_state, $account) {
   $options = array();
   $destination = 'user';
-  if (!empty($query['pass-reset-token'])) {
+  if (!empty($_GET['pass-reset-token'])) {
     // If pass-reset-token was set then complete final process interrupted
     // from user_pass_reset().
     watchdog('tfa', 'User %name used one-time login link', array('%name' => $account->name));
@@ -122,7 +129,7 @@ function _tfa_form_get_destination($context, $form_state, $account) {
     // Let the user's password be changed without the current password check.
     $token = backdrop_hash_base64(backdrop_random_bytes(32));
     $_SESSION['pass_reset_' . $account->uid] = $token;
-    $query['pass-reset-token'] = $token;
+    $options['query']['pass-reset-token'] = $token;
   }
   if (!empty($form_state['redirect'])) {
     if (is_array($form_state['redirect'])) {
@@ -133,9 +140,12 @@ function _tfa_form_get_destination($context, $form_state, $account) {
       $destination = $form_state['redirect'];
     }
   }
-  if (!empty($query['destination'])) {
-    $destination = $query['destination'];
-    unset($query['destination']);
+  if (!empty($_GET['destination']) && !url_is_external($_GET['destination'])) {
+    $query_destination = backdrop_parse_url($_GET['destination']);
+    $destination = $query_destination['path'];
+    $options['query'] = !empty($options['query']) ?
+      array_merge($options['query'], $query_destination['query']) : $query_destination['query'];
+    $options['fragment'] = $query_destination['fragment'];
     unset($_GET['destination']);
   }
   // Context redirect takes final precedence.
@@ -148,7 +158,6 @@ function _tfa_form_get_destination($context, $form_state, $account) {
       $destination = $context['redirect'];
     }
   }
-  $options = array_merge($options, array('query' => $query));
   // Allow other modules to alter final destination. This is better than form
   // altering TFA forms because callers would need to check the TFA process
   // status to figure out when to act.
@@ -160,7 +169,12 @@ function _tfa_form_get_destination($context, $form_state, $account) {
  * Check if flood has been hit.
  *
  * @param Tfa $tfa
+ *   Tfa object.
+ *
  * @return bool
+ *   TRUE if the flood has been hit.
+ *
+ * phpcs:disable Backdrop.Commenting.FunctionComment.TypeHintMissing
  */
 function _tfa_hit_flood($tfa) {
   if (config_get('tfa.settings', 'tfa_test_mode')) {
@@ -171,7 +185,7 @@ function _tfa_hit_flood($tfa) {
   $context = $tfa->getContext();
   $identifier = config_get('user.flood', 'flood_uid_only') ? $context['uid'] : $context['uid'] . '-' . ip_address();
 
-  // Check user specific flood
+  // Check user specific flood.
   if (!flood_is_allowed('tfa_user', config_get('tfa.settings', 'tfa_user_threshold'), $user_window, $identifier)) {
     backdrop_set_message(t('You have reached the threshold for incorrect code entry attempts. Please try again in !time minutes.', array('!time' => round($user_window / 60))), 'error');
     return TRUE;
