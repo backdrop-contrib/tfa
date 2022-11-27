@@ -2,6 +2,8 @@
 
 /**
  * @file
+ * TFA API.
+ *
  * This file contains no working PHP code; it exists to provide additional
  * documentation for doxygen as well as to document hooks in the standard
  * Backdrop manner.
@@ -24,7 +26,7 @@
  * Note, user-defined plugin classes must be available to the Backdrop registry
  * for loading. Either define them in a .info file or via an autoloader.
  *
- * @return
+ * @return array
  *   Keyed array of information about the plugin for TFA integration.
  *
  *   Required key:
@@ -67,10 +69,7 @@ function hook_tfa_api() {
 function my_tfa_setup_form($form, &$form_state, $account) {
 
   if (empty($form_state['storage'])) {
-    /**
-     * Include details about existing setup, if applicable.
-     */
-
+    // Include details about existing setup, if applicable.
     // Button to begin setup.
     $form['start'] = array(
       '#type' => 'submit',
@@ -79,8 +78,8 @@ function my_tfa_setup_form($form, &$form_state, $account) {
   }
   else {
     // Return the setup plugin's form.
-    $tfaSetup = $form_state['storage']['tfa_setup'];
-    $form = $tfaSetup->getForm($form, $form_state);
+    $tfa_setup = $form_state['storage']['tfa_setup'];
+    $form = $tfa_setup->getForm($form, $form_state);
   }
 
   // Required account element.
@@ -101,9 +100,9 @@ function my_tfa_setup_form_validate($form, &$form_state) {
     return;
   }
   // Run setup plugin's form validation.
-  $tfaSetup = $form_state['storage']['tfa_setup'];
-  if (!$tfaSetup->validateForm($form, $form_state)) {
-    foreach ($tfaSetup->getErrorMessages() as $element => $message) {
+  $tfa_setup = $form_state['storage']['tfa_setup'];
+  if (!$tfa_setup->validateForm($form, $form_state)) {
+    foreach ($tfa_setup->getErrorMessages() as $element => $message) {
       form_set_error($element, $message);
     }
   }
@@ -117,15 +116,14 @@ function my_tfa_setup_form_submit($form, &$form_state) {
 
   if (empty($form_state['storage'])) {
     // Start the TfaSetup process.
-
     $context = array('uid' => $account->uid);
     // Setup plugin class must be defined somehow (e.g. from a variable).
     $class = 'MyTfaPluginSetup';
     $setup_plugin = new $class($context);
-    $tfaSetup = new TfaSetup($setup_plugin, $context);
+    $tfa_setup = new TfaSetup($setup_plugin, $context);
 
     // Store TfaSetup process for multi-step.
-    $form_state['storage']['tfa_setup'] = $tfaSetup;
+    $form_state['storage']['tfa_setup'] = $tfa_setup;
     $form_state['rebuild'] = TRUE;
   }
   elseif (!empty($form_state['storage']['tfa_setup'])) {
@@ -150,8 +148,7 @@ function my_tfa_setup_form_submit($form, &$form_state) {
  * @param array $context
  *   TFA process context.
  */
-function hook_tfa_flood_hit($context = array()) {
-
+function hook_tfa_flood_hit(array $context = array()) {
 }
 
 /**
@@ -168,5 +165,5 @@ function hook_tfa_flood_hit($context = array()) {
  *   FALSE to disallow login or TRUE to allow it without undergoing TFA.
  */
 function hook_tfa_ready_require($account) {
-
+  return TRUE;
 }

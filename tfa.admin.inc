@@ -1,7 +1,8 @@
 <?php
 
 /**
- * @file tfa.admin.inc
+ * @file
+ * TFA Administration and settings functions.
  */
 
 /**
@@ -28,13 +29,13 @@ function tfa_admin_settings($form, $form_state) {
   // Check if openssl or mcrypt extensions are available.
   if (!extension_loaded('openssl') && !extension_loaded('mcrypt')) {
     // @todo allow alter in case of other encryption libs.
-    backdrop_set_message(t('The TFA module requires one of the PHP OpenSSL or MCrypt extensions to be installed on the web server. See <a href="!link">the TFA help documentation</a> for setup.', array('!link' => url('admin/help/tfa'))), 'error');
+    backdrop_set_message(t('The TFA module requires one of the PHP OpenSSL or MCrypt extensions to be installed on the web server. See <a href="!link">the TFA documentation</a> for setup.', array('!link' => url('https://backdropcms.org/project/tfa'))), 'error');
     return array();
   }
 
   // Return if there are no plugins.
   if (empty($plugins) || empty($validate_plugins)) {
-    backdrop_set_message(t('No plugins available for validation. See <a href="!link">the TFA help documentation</a> for setup.', array('!link' => url('admin/help/tfa'))), 'error');
+    backdrop_set_message(t('No plugins available for validation. See <a href="!link">the TFA documentation</a> for setup.', array('!link' => url('https://backdropcms.org/project/tfa'))), 'error');
     return array();
   }
 
@@ -60,7 +61,11 @@ function tfa_admin_settings($form, $form_state) {
     elseif ($enabled) {
       $message .= ' - unused';
     }
-    $items[] = t($message, array('%type' => _tfa_class_types($plugin['class']), '@name' => $plugin['name']));
+    // phpcs:disable Backdrop.Semantics.FunctionT.NotLiteralString
+    $items[] = t($message, array(
+      '%type' => _tfa_class_types($plugin['class']),
+      '@name' => $plugin['name'],
+    ));
   }
   $form['plugins']['list'] = array(
     '#value' => 'markup',
@@ -75,11 +80,13 @@ function tfa_admin_settings($form, $form_state) {
     '#description' => t('Enable TFA for account authentication.'),
   );
   // Reusable #states for tfa_enabled.
-  $enabled_state = array('visible' => array(
-    ':input[name="tfa_enabled"]' => array('checked' => TRUE))
+  $enabled_state = array(
+    'visible' => array(
+      ':input[name="tfa_enabled"]' => array('checked' => TRUE),
+    ),
   );
 
-  // Default active plugin
+  // Default active plugin.
   if (count($validate_plugins) >= 1) {
     $form['tfa_validate'] = array(
       '#type' => 'select',
@@ -97,7 +104,7 @@ function tfa_admin_settings($form, $form_state) {
     );
   }
 
-  // Order of fallback plugins
+  // Order of fallback plugins.
   if (count($validate_plugins) > 1) {
     $enabled_fallback = config_get('tfa.settings', 'tfa_fallback_plugins');
     $form['tfa_fallback'] = array(
@@ -109,8 +116,10 @@ function tfa_admin_settings($form, $form_state) {
     );
     // First enabled.
     foreach ($enabled_fallback as $order => $key) {
-      $validate_state = array('invisible' => array(
-        ':input[name="tfa_validate"]' => array('value' => $key))
+      $validate_state = array(
+        'invisible' => array(
+          ':input[name="tfa_validate"]' => array('value' => $key),
+        ),
       );
       $form['tfa_fallback'][$key] = array(
         'enable' => array(
@@ -135,8 +144,10 @@ function tfa_admin_settings($form, $form_state) {
       if (isset($form['tfa_fallback'][$key])) {
         continue;
       }
-      $validate_state = array('invisible' => array(
-        ':input[name="tfa_validate"]' => array('value' => $key))
+      $validate_state = array(
+        'invisible' => array(
+          ':input[name="tfa_validate"]' => array('value' => $key),
+        ),
       );
       $form['tfa_fallback'][$key] = array(
         'enable' => array(

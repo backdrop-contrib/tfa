@@ -1,22 +1,24 @@
 <?php
 
 /**
- * @file tfa.install
+ * @file
+ * Install and update hooks.
  */
 
 /**
  * Implements hook_requirements().
  */
 function tfa_requirements($phase) {
+  $t = get_t();
   if ($phase == 'runtime') {
     if (!extension_loaded('openssl')) {
       if (extension_loaded('mcrypt')) {
         $requirement_severity = REQUIREMENT_WARNING;
-        $description = t('The TFA module recommends the PHP OpenSSL extension to be installed on the web server.');
+        $description = $t('The TFA module recommends the PHP OpenSSL extension to be installed on the web server.');
       }
       else {
         $requirement_severity = REQUIREMENT_ERROR;
-        $description = t('The TFA module requires either the PHP OpenSSL or MCrypt extensions to be installed on the web server.');
+        $description = $t('The TFA module requires either the PHP OpenSSL or Mcrypt extensions to be installed on the web server.');
       }
     }
     else {
@@ -29,8 +31,8 @@ function tfa_requirements($phase) {
 
     $requirements = array(
       array(
-        'title' => t('Two-factor authentication'),
-        'value' => t($msg),
+        'title' => $t('Two-factor authentication'),
+        'value' => $t($msg),
         'description' => $description,
         'severity' => $requirement_severity,
       ),
@@ -89,4 +91,16 @@ function tfa_update_1001() {
   $config->set('tfa_fallback_plugins', array('-999' => $validate_plugin));
   $config->clear('tfa_fallback_plugin');
   $config->save();
+}
+
+/**
+ * Move tfa_timeout from variable to config.
+ */
+function tfa_update_1002() {
+  $config = config('tfa.settings');
+  $config->set('tfa_timeout', update_variable_get('tfa_timeout', 300));
+  $config->save();
+
+  // Delete variables.
+  update_variable_del('tfa_timeout');
 }

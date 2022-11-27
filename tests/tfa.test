@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file tfa.test.
+ * @file
  * Backdrop test cases for TFA.
  */
 
@@ -10,6 +10,9 @@
 */
 class TfaTestCase extends BackdropWebTestCase {
 
+  /**
+   * {@inheritdoc}
+   */
   public function setUp() {
     // Enable TFA module and the test module.
     parent::setUp('tfa', 'tfa_test');
@@ -17,6 +20,9 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->web_user = $this->backdropCreateUser(array('access content'));
   }
 
+  /**
+   * Test authentication.
+   */
   public function testAuthentication() {
     // Enable test plugin.
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
@@ -62,7 +68,9 @@ class TfaTestCase extends BackdropWebTestCase {
 
     // Enable TOTP and two fallback.
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_totp');
-    config_set('tfa.settings', 'tfa_fallback_plugins', array('tfa_test_send', 'tfa_test_fallback'));
+    config_set('tfa.settings', 'tfa_fallback_plugins', array(
+      'tfa_test_send', 'tfa_test_fallback'
+    ));
 
     $edit = array(
       'name' => $account->name,
@@ -95,6 +103,9 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->assertLink('Log out', 0, 'Logout link appears');
   }
 
+  /**
+   * Test flood control.
+   */
   public function testFloodControl() {
     // Enable test plugin.
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
@@ -122,7 +133,8 @@ class TfaTestCase extends BackdropWebTestCase {
     for ($i = 1; $i < $hourly_threshold; $i++) {
       $this->backdropPost('system/tfa/' . $account->uid . '/' . $login_hash, $edit, 'Submit');
     }
-    $this->backdropGet('system/tfa/' . $account->uid . '/' . $login_hash); // Not sure why this is necessary.
+    // Not sure why this is necessary.
+    $this->backdropGet('system/tfa/' . $account->uid . '/' . $login_hash);
     $this->assertText($this->uiStrings('flood-validate'), 'The validation flood text appears');
 
     config_set('tfa.settings', 'tfa_begin_threshold', 2);
@@ -138,6 +150,9 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->assertIdentical(state_get('tfa_test_flood_hit', ''), $account->uid, 'TFA flood hit hooks invoked');
   }
 
+  /**
+   * Test plugin flood control.
+   */
   public function testPluginFloodControl() {
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     $account = $this->web_user;
@@ -155,8 +170,9 @@ class TfaTestCase extends BackdropWebTestCase {
   }
 
   /**
-   * Test that TFA correctly sets error messages from plugins that error during
-   * the begin() process.
+   * Test that TFA correctly sets error messages.
+   *
+   * Messages originate from plugins that error during the begin() process.
    */
   public function testSendError() {
     // Enable test plugin.
@@ -177,6 +193,9 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->assertText('Error during resend', 'Error message appears for resend');
   }
 
+  /**
+   * Test redirection.
+   */
   public function testRedirection() {
     // Enable test plugin.
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
@@ -221,6 +240,9 @@ class TfaTestCase extends BackdropWebTestCase {
     // @todo test one-time login redirection.
   }
 
+  /**
+   * Test login plugins.
+   */
   public function testLoginPlugins() {
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     // Enable login plugin.
@@ -246,6 +268,9 @@ class TfaTestCase extends BackdropWebTestCase {
     $this->assertNoFieldById('edit-code', '', 'The send code input does not appear');
   }
 
+  /**
+   * Test tfa_test_is_ready.
+   */
   public function testReady() {
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
     $account = $this->web_user;
@@ -269,7 +294,9 @@ class TfaTestCase extends BackdropWebTestCase {
   public function testAlter() {
     // Set TOTP as primary.
     config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_totp');
-    config_set('tfa.settings', 'tfa_fallback_plugins', array('tfa_test_send', 'tfa_test_fallback'));
+    config_set('tfa.settings', 'tfa_fallback_plugins', array(
+      'tfa_test_send', 'tfa_test_fallback'
+    ));
     // Allow context alter that will set send as validate plugin.
     state_set('tfa_test_context_alter', 'tfa_test_send');
     $account = $this->web_user;
@@ -283,7 +310,7 @@ class TfaTestCase extends BackdropWebTestCase {
   }
 
   /**
-   * Test the TfaSetup forms and process in tfa_test.module
+   * Test the TfaSetup forms and process in tfa_test.module.
    *
    * This test illustrates how a user would setup a TFA send plugin. See
    * tfa_test.module tfa_test_setup_form() for how to use.
@@ -343,25 +370,67 @@ class TfaTestCase extends BackdropWebTestCase {
    */
   protected function testEncryption() {
     $tfa_totp = new TfaTestTotp(array('uid' => 1));
-    $plain_text = $this->randomName(rand(6,20));
+    $plain_text = $this->randomName(rand(6, 20));
     $tfa_totp->setInStore($plain_text);
     $this->assertIdentical($plain_text, $tfa_totp->readFromStore());
   }
 
   /**
+   * Test expiry of the TFA process.
+   */
+  public function testTfaExpiry()
+  {
+    // Enable test plugin.
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
+    $code = $this->randomName();
+    state_set('tfa_test_code', $code);
+    config_set('tfa.settings', 'tfa_timeout', -60);
+
+    config_set('tfa.settings', 'tfa_fallback_plugins', array(
+      'tfa_test_send', 'tfa_test_fallback'
+    ));
+
+    $account = $this->web_user;
+
+    $edit = array(
+      'name' => $account->name,
+      'pass' => $account->pass_raw,
+    );
+    // Not using backdropLogin() since it tests for actual login.
+    $this->backdropPost('user/login', $edit, 'Log in');
+
+    $this->assertResponse(403, 'Access is denied to timed-out TFA form.');
+    $this->assertRaw('TFA session has expired.', 'Timeout message is displayed');
+
+    $url_parts = explode('/', $this->url);
+    $login_hash = array_pop($url_parts);
+    $this->backdropGet('system/tfa/' . $account->uid . '/' . $login_hash);
+
+    $this->assertResponse(403, 'Access is denied to timed-out TFA form.');
+    $this->assertRaw('TFA session has expired.', 'Timeout message is displayed');
+  }
+
+
+  /**
    * TFA module user interface strings.
    *
-   * @param string Identifying string
+   * @param string $id
+   *   ID string.
+   *
    * @return string
+   *   Appropriate string.
    */
   protected function uiStrings($id) {
     switch ($id) {
       case 'fallback-button':
         return "Can't access your account?";
+
       case 'flood-validate':
         return 'You have reached the threshold for incorrect code entry attempts.';
+
       case 'flood-begin':
         return 'You have reached the threshold for TFA attempts.';
     }
   }
+
 }
