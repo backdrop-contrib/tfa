@@ -13,7 +13,7 @@ Time-based One Time Passwords, SMS-delivered codes, fallback codes, or
 integrations with third-party suppliers like Authy, Duo and others.
 
 Read more about the features and use of TFA at its Backdrop.org project page at
-https://backdropcms.org/project/tfa
+<https://backdropcms.org/project/tfa>.
 
 ## Installation and use
 
@@ -58,33 +58,27 @@ the active plugin.
 
 ### Getting started
 
-* Implement hook_tfa_api() in a .module file
-
-* Create a class extending TfaBasePlugin and implementing one of the TFA
-interfaces
-
+* Implement `hook_tfa_api()` in a .module file
+* Create a class extending `TfaBasePlugin` and implementing one of the TFA
+interfaces.
 * Optionally create a second class for plugin setup implementing
-TfaSetupPluginInterface
-
-For starter or example code see the test classes at ./tests/includes/
+`TfaSetupPluginInterface`.
+For starter or example code see the test classes at `./tests/includes/`.
 
 ### Plugin interfaces, or types of plugins
 
 TFA plugins should implement one of the following interfaces.
 
-* Validation (TfaValidationPluginInterface) - Validation plugins are the main
+* Validation (`TfaValidationPluginInterface`) - Validation plugins are the main
 TFA plugin and are used during the authentication process to accept the 2nd
 authenticating element.
-
-* Login (TfaLoginPluginInterface) - Login plugins are used to limit what
+* Login (`TfaLoginPluginInterface`) - Login plugins are used to limit what
 accounts must carry out TFA before final authentication.
-
-* Send (TfaSendPluginInterface) - Send plugins are used for carrying out an
+* Send (`TfaSendPluginInterface`) - Send plugins are used for carrying out an
 action at the beginning of the TFA process. For example, a plugin that sends a
 code to a user over SMS could implement this interface to generate and text the
 code.
-
-* Setup (TfaSetupPluginInterface) - A setup plugin is used by the TfaSetup
+* Setup (`TfaSetupPluginInterface`) - A setup plugin is used by the TfaSetup
  class for configuring a TFA plugin for an account.
 
 ### Plugin context
@@ -93,8 +87,8 @@ A plugin is instantiated with an array of data about the occurring TFA process.
 This context array must contain the following elements that should not be
 modified.
 
-* uid - Backdrop UID of user carrying out the TFA process.
-* plugins - Array of active plugins in the process, must include element
+* `uid` - Backdrop UID of user carrying out the TFA process.
+* `plugins` - Array of active plugins in the process, must include element
 'validate' and may also include 'login' and 'fallback'.
 
 The context array may also include any plugin-specifc elements so long as there
@@ -104,12 +98,12 @@ to the Backdrop session or form cache database tables.
 
 ### Base methods
 
-Plugins can implement the ready() method to determine if its ready for use with
+Plugins can implement the `ready()` method to determine if its ready for use with
 the authenticating account. For example, if authenticating user has not setup of
 a phone number for SMS delivery a SMS TFA plugin would not want to begin the TFA
 process for that account and should return FALSE.
 
-The finalize() method can be used to carry-out actions after confirming the TFA
+The `finalize()` method can be used to carry-out actions after confirming the TFA
 process. For example, a SMS plugin might mark a code as having been used to
 prevent a repeated attempt.
 
@@ -119,32 +113,39 @@ The base TFA plugin class provides encryption and decryption methods using PHP
 Mcrypt. While you can use these methods for simple encryption it is recommended
 that you utilize more advanced cryptography libraries with your own plugins.
 
-Use one of the following libraries and override the TfaBasePlugin encrypt and
+Use one of the following libraries and override the `TfaBasePlugin` encrypt and
 decrypt methods.
 
 * Zend Framework's Zend\Crypt
-* phpseclib http://phpseclib.sourceforge.net/
+* [phpseclib](http://phpseclib.sourceforge.net/)
 
 ### Example implementation descriptions
 
-**How to generate and send a code to a user via SMS**
+#### How to generate and send a code to a user via SMS
 
-Create a plugin that implements the TfaSendPluginInterface interface and
-implement the begin() method to generate a code (or use parent generate()) and
+Create a plugin that implements the `TfaSendPluginInterface` interface and
+implement the `begin()` method to generate a code (or use parent `generate()`) and
 send it to the user. Use the SMS Framework or Twilio modules (for example) to
 actually deliver the code over SMS.
 
-Implement the TfaSetupPluginInterface to allow the user to
-set the phone number for delivery. Separately implement hook_schema() to create
+Implement the `TfaSetupPluginInterface` to allow the user to
+set the phone number for delivery. Separately implement `hook_schema()` to create
 a database table for storing TFA phone numbers or use a account profile field.
 
 **How to allow web services to authenticate while requiring TFA for regular
 users**
 
 A services authentication scheme will be affected by TFA's implementation during
-hook_user_login() so create a login plugin that checks the services user and
-returns TRUE for loginAllowed(). See TfaTestLogin in ./tests/includes for an
+`hook_user_login()` so create a login plugin that checks the services user and
+returns `TRUE` for `loginAllowed()`. See `TfaTestLogin` in `./tests/includes` for an
 example.
+
+## Available plugins
+
+Available plugins for install as separate modules:
+
+* [TFA Basic](https://backdropcms.org/project/tfa_basic) - includes plugins: Time-based One Time Password,
+  Trusted Browser, Recovery Codes, and Twilio SMS.
 
 ## License
 
@@ -152,12 +153,12 @@ This project is GPL v2 software. See the LICENSE.txt file in this directory for 
 
 ## Current Maintainers
 
-Herb v/d Dool (https://github.com/herbdool/)
+[Herb v/d Dool](https://github.com/herbdool/)
 
 This module is currently seeking co-maintainers.
 
 ## Credits
 
-Ported to Backdrop by Herb v/d Dool (https://github.com/herbdool/)
+Ported to Backdrop by [Herb v/d Dool](https://github.com/herbdool/).
 
-This module was originally written for Drupal (https://drupal.org/project/tfa). Drupal maintainers are: [coltrane](https://www.drupal.org/u/coltrane), [nerdstein](https://www.drupal.org/u/nerdstein), [daggerhart](https://www.drupal.org/u/daggerhart).
+This module was originally written for Drupal (<https://drupal.org/project/tfa>). Drupal maintainers are: [coltrane](https://www.drupal.org/u/coltrane), [nerdstein](https://www.drupal.org/u/nerdstein), [daggerhart](https://www.drupal.org/u/daggerhart).
