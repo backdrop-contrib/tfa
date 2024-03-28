@@ -10,6 +10,11 @@
  */
 class TfaTestCase extends BackdropWebTestCase {
 
+  /**
+   * A user with permission to access content.
+   *
+   * @var object
+   */
   protected $web_user;
 
   /**
