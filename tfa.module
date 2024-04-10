@@ -297,6 +297,7 @@ function tfa_login_form_redirect($form, &$form_state) {
  * Login submit handler to determine if TFA process is applicable.
  */
 function tfa_login_submit($form, &$form_state) {
+  $config = config('tfa.settings');
   // Similar to tfa_user_login() but not required to force user logout.
   $account = isset($form_state['uid']) ? user_load($form_state['uid']) : user_load_by_name($form_state['values']['name']);
   // Return early if user has succesfully gone through TFA process or if
@@ -313,7 +314,34 @@ function tfa_login_submit($form, &$form_state) {
     // Allow other modules to act on login when account is not set up for TFA.
     $require_tfa = array_filter(module_invoke_all('tfa_ready_require', $account));
     if (!empty($require_tfa)) {
-      $form_state['redirect'] = !empty($form_state['redirect']) ? $form_state['redirect'] : 'user';
+      $skipped_validation = state_get('tfa_skipped_validation', array());
+      // If the user id is set then it means they skipped validation at least
+      // once so let them be logged out and redirect them to the user page.
+      // @todo: have a way of resetting a user's skipped validation number.
+      if (isset($skipped_validation[$account->uid]) && $skipped_validation[$account->uid] > $config->get('tfa_validation_skip')) {
+        $form_state['redirect'] = !empty($form_state['redirect']) ? $form_state['redirect'] : 'user';
+      }
+      else {
+        // We're allowing user to skip validation once so finalise login
+        // process and redirect them to the setup page.
+        user_login_submit($form, $form_state);
+
+        // Mark the account that skipped validation so next time they can be
+        // denied access if they still haven't got it setup.
+        $skipped_validation[$account->uid] = 1;
+        if (isset($skipped_validation[$account->uid])) {
+          $skipped_validation[$account->uid]++;
+        }
+
+        state_set('tfa_skipped_validation', $skipped_validation);
+
+        // Skip verification warning.
+        tfa_skip_verification_message($skipped_validation[$account->uid]);
+
+        // Redirect user to tfa_basic setup page.
+        $form_state['redirect'] = 'user/' . $account->uid . '/security/tfa';
+      }
+
       return;
     }
     else {
@@ -352,6 +380,28 @@ function tfa_login_submit($form, &$form_state) {
 }
 
 /**
+ * Set the skip verification message.
+ *
+ * @param int $count
+ */
+function tfa_skip_verification_message($count) {
+  $messages = backdrop_get_messages('error');
+  // Since the tfa_basic module sets the error message this will be set
+  // but check just in case.
+  if (isset($messages['error'])) {
+    foreach ($messages['error'] as $key => $message) {
+      if ($message != t('Login disallowed. You are required to set up two-factor authentication. Please contact a site administrator.')) {
+        // Re-add any other error messages we might have in the queue.
+        backdrop_set_message($message, 'error');
+      }
+    }
+  }
+
+  // Notify user that they are required to setup TFA.
+  backdrop_set_message(t('You have @count logins left. You are required to set up two-factor authentication. After this you will be unable to login.', array('@count' => $count)), 'warning', FALSE);
+}
+
+/**
  * Check TFA plugins if login should be interrupted for authenticating account.
  *
  * @param object $account
@@ -374,7 +424,8 @@ function tfa_login_allowed($account) {
  * Implements hook_user_login().
  */
 function tfa_user_login(&$edit, $account) {
-  if (!config_get('tfa.settings', 'tfa_enabled')) {
+  $config = config('tfa.settings');
+  if (!$config->get('tfa_enabled')) {
     return;
   }
 
@@ -390,8 +441,16 @@ function tfa_user_login(&$edit, $account) {
     // Allow other modules to act on login when account is not set up for TFA.
     $require_tfa = array_filter(module_invoke_all('tfa_ready_require', $account));
     if (!empty($require_tfa)) {
-      tfa_logout();
-      backdrop_goto('user');
+      $skipped_validation = state_get('tfa_skipped_validation', array());
+      // If the user id is set then it means they skipped validation at least
+      // once so let them be logged out and redirect them to the user page.
+      if (isset($skipped_validation[$account->uid]) && $skipped_validation[$account->uid] > $config->get('tfa_validation_skip')) {
+        tfa_logout();
+        backdrop_goto('user');
+      }
+      else {
+        tfa_skip_verification_message($skipped_validation[$account->uid]);
+      }
     }
   }
   else {

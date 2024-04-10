@@ -104,3 +104,12 @@ function tfa_update_1002() {
   // Delete variables.
   update_variable_del('tfa_timeout');
 }
+
+/**
+ * Create tfa_validation_skip variable.
+ */
+function tfa_update_1003() {
+  $config = config('tfa.settings');
+  $config->set('tfa_validation_skip', 3);
+  $config->save();
+}
