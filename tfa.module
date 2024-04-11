@@ -313,6 +313,13 @@ function tfa_login_submit($form, &$form_state) {
     // Allow other modules to act on login when account is not set up for TFA.
     $require_tfa = array_filter(module_invoke_all('tfa_ready_require', $account));
     if (!empty($require_tfa)) {
+      // Allow other modules to skip the TFA requirement when account is not set up for TFA.
+      $skip_require_tfa = array_filter(module_invoke_all('tfa_skip_require', $account));
+      if (!empty($skip_require_tfa)) {
+        // Not required so continue with log in.
+        user_login_submit($form, $form_state);
+        return;
+      }
       $form_state['redirect'] = !empty($form_state['redirect']) ? $form_state['redirect'] : 'user';
       return;
     }
@@ -387,9 +394,14 @@ function tfa_user_login(&$edit, $account) {
   $tfa = tfa_get_process($account);
   // Check if TFA has been set up by the account.
   if (!$tfa->ready()) {
-    // Allow other modules to act on login when account is not set up for TFA.
+    // Allow other modules to require TFA when account is not set up for TFA.
     $require_tfa = array_filter(module_invoke_all('tfa_ready_require', $account));
     if (!empty($require_tfa)) {
+      // Allow other modules to skip the TFA requirement when account is not set up for TFA.
+      $skip_require_tfa = array_filter(module_invoke_all('tfa_skip_require', $account));
+      if (!empty($skip_require_tfa)) {
+        return;
+      }
       tfa_logout();
       backdrop_goto('user');
     }
