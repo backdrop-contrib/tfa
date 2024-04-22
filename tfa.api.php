@@ -158,12 +158,30 @@ function hook_tfa_flood_hit(array $context = array()) {
  * conditions of the account not having TFA set up. TFA module will have already
  * invoked 'ready' methods on enabled plugins.
  *
- * @param object $account
+ * @param User $account
  *   User account.
  *
  * @return bool
  *   FALSE to disallow login or TRUE to allow it without undergoing TFA.
  */
 function hook_tfa_ready_require($account) {
+  return TRUE;
+}
+
+/**
+ * Whether to skip validation requirement when TFA is not setup or ready for the
+ * account.
+ *
+ * Implement this hook to decide if authentication can still occur despite being
+ * denied under the conditions of the account not having TFA set up. TFA module
+ * will have already invoked 'ready' methods on enabled plugins.
+ *
+ * @param User $account
+ *   User account.
+ *
+ * @return bool
+ *   TRUE to skip the validation requirement, FALSE otherwise.
+ */
+function hook_tfa_skip_require($account) {
   return TRUE;
 }

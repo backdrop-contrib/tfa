@@ -214,3 +214,17 @@ function tfa_test_tfa_context_alter(&$context) {
 function tfa_test_tfa_flood_hit($context) {
   state_set('tfa_test_flood_hit', $context['uid']);
 }
+
+/**
+ * Implements hook_tfa_ready_require().
+ */
+function tfa_test_tfa_ready_require($account) {
+  return state_get('tfa_test_tfa_ready_require', TRUE);
+}
+
+/**
+ * Implements hook_tfa_skip_require().
+ */
+function tfa_test_tfa_skip_require($account) {
+  return state_get('tfa_test_tfa_skip_require', TRUE);
+}
