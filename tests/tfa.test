@@ -10,6 +10,8 @@
  */
 class TfaTestCase extends BackdropWebTestCase {
 
+  protected $web_user;
+
   /**
    * {@inheritdoc}
    */
@@ -277,6 +279,54 @@ class TfaTestCase extends BackdropWebTestCase {
 
     // Disable ready.
     state_set('tfa_test_is_ready', FALSE);
+
+    $edit = array(
+      'name' => $account->name,
+      'pass' => $account->pass_raw,
+    );
+    $this->backdropPost('user/login', $edit, 'Log in');
+    $this->assertLink('Log out', 0, 'Authenticated');
+
+    $this->backdropLogout();
+  }
+
+  /**
+   * Test ready hooks.
+   */
+  public function testReadyHooks() {
+    config_set('tfa.settings', 'tfa_validate_plugin', 'tfa_test_send');
+    $account = $this->web_user;
+
+    // Disable ready.
+    state_set('tfa_test_is_ready', FALSE);
+
+    // Require in hook.
+    state_set('tfa_test_tfa_ready_require', TRUE);
+    state_set('tfa_test_tfa_skip_require', FALSE);
+
+    $edit = array(
+      'name' => $account->name,
+      'pass' => $account->pass_raw,
+    );
+    $this->backdropPost('user/login', $edit, 'Log in');
+    $this->assertText('Log in', 'The ready_required hook redirects user to login page.');
+
+    // Not required in hook.
+    state_set('tfa_test_tfa_ready_require', FALSE);
+    state_set('tfa_test_tfa_skip_require', FALSE);
+
+    $edit = array(
+      'name' => $account->name,
+      'pass' => $account->pass_raw,
+    );
+    $this->backdropPost('user/login', $edit, 'Log in');
+    $this->assertLink('Log out', 0, 'Authenticated');
+
+    $this->backdropLogout();
+
+    // Skip in hook even if required.
+    state_set('tfa_test_tfa_ready_require', TRUE);
+    state_set('tfa_test_tfa_skip_require', TRUE);
 
     $edit = array(
       'name' => $account->name,
