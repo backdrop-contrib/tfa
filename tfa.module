@@ -330,6 +330,9 @@ function tfa_login_submit($form, &$form_state) {
     }
   }
   else {
+    // Regenerate the session ID to prevent against session fixation attacks.
+    drupal_session_regenerate();
+
     // Restart flood levels, session context, and TFA process.
     $identifier = config_get('user.flood', 'flood_uid_only') ? $account->uid : $account->uid . '-' . ip_address();
     flood_clear_event('tfa_user', $identifier);
