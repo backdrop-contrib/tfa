@@ -498,3 +498,18 @@ function tfa_login_hash($account) {
   $data = implode(':', array($account->name, $account->pass, $account->login));
   return backdrop_hash_base64($data);
 }
+
+/**
+ * Implements hook_menu_site_status_alter().
+ */
+function tfa_menu_site_status_alter(&$menu_site_status, $path) {
+  $matches = NULL;
+  if ($menu_site_status == MENU_SITE_OFFLINE && preg_match('~^system/tfa/(\d+)/~', $path, $matches)) {
+    $account = user_load($matches[1]);
+    // Allow user to use TFA if user has permission to use site in maintenance
+    // mode.
+    if (user_access('access site in maintenance mode', $account)) {
+      $menu_site_status = MENU_SITE_ONLINE;
+    }
+  }
+}
