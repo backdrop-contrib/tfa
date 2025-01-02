@@ -10,9 +10,19 @@
  *
  * @param object $account
  *   User account object.
+ *
+ * @return array
+ *   Form array
  */
 function tfa_begin_form($account) {
-  return backdrop_get_form('tfa_form', $account);
+  $tfa_form = backdrop_get_form('tfa_form', $account);
+
+  // Function added in Backdrop 1.30.0 to support simplified login pages.
+  if (!function_exists('user_login_page_wrapper')) {
+    return $tfa_form;
+  }
+
+  return user_login_page_wrapper($tfa_form);
 }
 
 /**
@@ -192,8 +202,8 @@ function _tfa_hit_flood($tfa) {
   }
   // Check entire process flood.
   elseif (!flood_is_allowed('tfa_begin', config_get('tfa.settings', 'tfa_begin_threshold'), $window)) {
-    backdrop_set_message(t('You have reached the threshold for TFA attempts. Please try again in !time minutes.', array('!time' => round($window / 60))), 'error');
-    return TRUE;
+    // backdrop_set_message(t('You have reached the threshold for TFA attempts. Please try again in !time minutes.', array('!time' => round($window / 60))), 'error');
+    // return TRUE;
   }
   // Check TFA plugin flood.
   elseif (!$tfa->floodIsAllowed($window)) {
