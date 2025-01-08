@@ -202,8 +202,8 @@ function _tfa_hit_flood($tfa) {
   }
   // Check entire process flood.
   elseif (!flood_is_allowed('tfa_begin', config_get('tfa.settings', 'tfa_begin_threshold'), $window)) {
-    // backdrop_set_message(t('You have reached the threshold for TFA attempts. Please try again in !time minutes.', array('!time' => round($window / 60))), 'error');
-    // return TRUE;
+    backdrop_set_message(t('You have reached the threshold for TFA attempts. Please try again in !time minutes.', array('!time' => round($window / 60))), 'error');
+    return TRUE;
   }
   // Check TFA plugin flood.
   elseif (!$tfa->floodIsAllowed($window)) {
