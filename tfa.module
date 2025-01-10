@@ -57,6 +57,25 @@ function tfa_menu() {
 }
 
 /**
+ * Implements hook_menu_alter().
+ */
+function tfa_menu_alter(&$items) {
+  // If we are using the simplified look for login pages, suppress the layout.
+  if (config_get('system.core', 'user_login_appearance') == 'simplified') {
+    $items['system/tfa/%user/%']['delivery callback'] = 'backdrop_deliver_html_page';
+  }
+}
+
+/**
+ * Implements hook_user_login_paths().
+ */
+function tfa_user_login_paths() {
+  return array(
+    'system/tfa/*/*' => TRUE,
+  );
+}
+
+/**
  * Validate access to TFA code entry form.
  */
 function tfa_entry_access($account, $url_hash) {

@@ -10,9 +10,19 @@
  *
  * @param object $account
  *   User account object.
+ *
+ * @return array
+ *   Form array
  */
 function tfa_begin_form($account) {
-  return backdrop_get_form('tfa_form', $account);
+  $tfa_form = backdrop_get_form('tfa_form', $account);
+
+  // Function added in Backdrop 1.30.0 to support simplified login pages.
+  if (!function_exists('user_login_page_wrapper')) {
+    return $tfa_form;
+  }
+
+  return user_login_page_wrapper($tfa_form);
 }
 
 /**
