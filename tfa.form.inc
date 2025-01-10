@@ -36,7 +36,8 @@ function tfa_form($form, $form_state, $account) {
   // Check flood tables.
   if (_tfa_hit_flood($tfa)) {
     module_invoke_all('tfa_flood_hit', $tfa->getContext());
-    return backdrop_access_denied();
+    backdrop_goto('user/login');
+    return;
   }
   // Get TFA plugins form.
   $form = $tfa->getForm($form, $form_state);
@@ -80,7 +81,7 @@ function tfa_form_validate($form, &$form_state) {
 
     if (_tfa_hit_flood($tfa)) {
       module_invoke_all('tfa_flood_hit', $tfa->getContext());
-      return backdrop_access_denied();
+      backdrop_goto('user/login');
     }
   }
 }
