@@ -196,7 +196,7 @@ function _tfa_hit_flood($tfa) {
     return TRUE;
   }
   // Check TFA plugin flood.
-  elseif (!$tfa->floodIsAllowed($window)) {
+  elseif (!$tfa->floodIsAllowed($user_window)) {
     foreach ($tfa->getErrorMessages() as $message) {
       backdrop_set_message($message, 'error');
     }

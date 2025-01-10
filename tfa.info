@@ -3,3 +3,7 @@ description = Pluggable provider of second factor authentication for Backdrop
 backdrop = 1.x
 type = module
 configure = admin/config/people/tfa
+
+package = User Accounts
+tags[] = Account Management
+tags[] = User Login

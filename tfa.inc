@@ -513,6 +513,19 @@ abstract class TfaBasePlugin {
   }
 
   /**
+   * Check flood is allowed.
+   *
+   * @param int $window
+   *   Number of seconds in the time window for this event.
+   *
+   * @return bool
+   *   Whether flood is allowed for a specified event.
+   */
+  public function floodIsAllowed($window) {
+    return TRUE;
+  }
+
+  /**
    * Submit form.
    *
    * @param array $form
