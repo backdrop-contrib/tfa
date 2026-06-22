@@ -212,7 +212,11 @@ function tfa_get_process($account) {
   $tfa = &backdrop_static(__FUNCTION__);
   if (!isset($tfa)) {
     $context = tfa_get_context($account);
-    if (empty($context)) {
+    // Rebuild context if it's empty or only carries the post-auth login
+    // marker (['login' => TRUE]) written by tfa_login() — that shape has no
+    // 'plugins' key, so accessing $context['plugins']['validate'] below
+    // would throw a TypeError when new Tfa() is constructed with FALSE.
+    if (empty($context['plugins'])) {
       $context = tfa_start_context($account);
     }
     // Get plugins.
