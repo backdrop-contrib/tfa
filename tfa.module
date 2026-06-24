@@ -339,6 +339,8 @@ function tfa_login_submit($form, &$form_state) {
         user_login_submit($form, $form_state);
         return;
       }
+      // Let modules set a deny message or take other action.
+      module_invoke_all('tfa_login_denied', $account);
       $form_state['redirect'] = !empty($form_state['redirect']) ? $form_state['redirect'] : 'user';
       return;
     }
@@ -424,6 +426,7 @@ function tfa_user_login(&$edit, $account) {
       if (!empty($skip_require_tfa)) {
         return;
       }
+      module_invoke_all('tfa_login_denied', $account);
       tfa_logout();
       backdrop_goto('user');
     }

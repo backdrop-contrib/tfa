@@ -176,6 +176,11 @@ function hook_tfa_ready_require($account) {
  * denied under the conditions of the account not having TFA set up. TFA module
  * will have already invoked 'ready' methods on enabled plugins.
  *
+ * Return TRUE or FALSE only. Don't set messages or change state here: TFA
+ * calls every implementation and lets the login through if any returns TRUE,
+ * so side effects can fire on logins another module allowed. Use
+ * hook_tfa_login_denied() to set deny messages.
+ *
  * @param User $account
  *   User account.
  *
@@ -184,4 +189,21 @@ function hook_tfa_ready_require($account) {
  */
 function hook_tfa_skip_require($account) {
   return TRUE;
+}
+
+/**
+ * Act when TFA enforcement denies a login.
+ *
+ * Invoked at the deny site after hook_tfa_skip_require has been collected from
+ * every implementation and no implementation granted a bypass. Use this hook
+ * to set a user-facing message explaining the denial, log the event, or take
+ * other action before the user is redirected away.
+ *
+ * By the time this hook fires the deny is committed — implementations cannot
+ * allow the login through.
+ *
+ * @param User $account
+ *   User account whose login is being denied.
+ */
+function hook_tfa_login_denied($account) {
 }
